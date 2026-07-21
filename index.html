@@ -1496,7 +1496,8 @@ function contornoMetaball(lista){
     let f=0;
     for(const [cx,cy,r] of lista){
       const dx=x-cx,dy=y-cy;
-      f+=r*r/(dx*dx+dy*dy+1e-6);
+      const q=r*r/(dx*dx+dy*dy+1e-6);
+      f+=q*q;                 // caída afilada: la unión abraza los círculos
     }
     F[j*nx+i]=1-f;            // negativo = adentro (iso f=1)
   }
