@@ -1323,19 +1323,19 @@ function aplicarGoo(){
    prototipos: gana el estado cuya firma esté más cerca de la
    lectura (distancia L1, determinista). Orden [L,P,S,V,O,F,M]. */
 const MOODS=[
-  {id:"calm",     nombre:"Calm",     proto:[.85,.8,.3,.3,.75,.25,.3],
+  {id:"calm",     nombre:"Calmado",     proto:[.85,.8,.3,.3,.75,.25,.3],
    cielo:["#8fa0b4","#aebbc6","#cfd4d4","#e3e0d8"], claroB:"#c6d4e0", profOsc:"#1f2c39", profCl:"#8ea2b5", barra:["#d6dbdf","#7d93ab"]},
-  {id:"active",   nombre:"Active",   proto:[.5,.4,.9,.5,.85,.5,.4],
+  {id:"active",   nombre:"Activo",   proto:[.5,.4,.9,.5,.85,.5,.4],
    cielo:["#a8946a","#c4b391","#ded4b8","#efe9d8"], claroB:"#e0d6ba", profOsc:"#3d3320", profCl:"#a89a78", barra:["#e6ddc2","#a8946a"]},
-  {id:"busy",     nombre:"Busy",     proto:[.6,.75,.45,.5,.8,.6,.5],
+  {id:"busy",     nombre:"Ajetreado",     proto:[.6,.75,.45,.5,.8,.6,.5],
    cielo:["#6f9a9b","#9bbcbb","#c6d7d4","#e2e7e0"], claroB:"#c4d8d5", profOsc:"#1f3a3a", profCl:"#84a6a4", barra:["#d2e0dc","#6f9a9b"]},
-  {id:"crowded",  nombre:"Crowded",  proto:[.3,.15,.6,.75,.5,.85,.7],
+  {id:"crowded",  nombre:"Concurrido",  proto:[.3,.15,.6,.75,.5,.85,.7],
    cielo:["#a07868","#bd9a8b","#d8c0b3","#ecdfd6"], claroB:"#dcc6ba", profOsc:"#3c2620", profCl:"#a5847a", barra:["#e4d2c8","#a07868"]},
-  {id:"balanced", nombre:"Balanced", proto:[.5,.6,.35,.35,.9,.4,.35],
+  {id:"balanced", nombre:"Equilibrado", proto:[.5,.6,.35,.35,.9,.4,.35],
    cielo:["#7fa08c","#a3b8a6","#cfd8cc","#e7e6da"], claroB:"#c9d8cd", profOsc:"#22352b", profCl:"#8fa89a", barra:["#d6ded2","#7fa08c"]},
-  {id:"dynamic",  nombre:"Dynamic",  proto:[.45,.3,.55,.6,.15,.75,.5],
+  {id:"dynamic",  nombre:"Dinámico",  proto:[.45,.3,.55,.6,.15,.75,.5],
    cielo:["#8f8bb0","#afaac8","#d0cddf","#e8e5ec"], claroB:"#cfcadf", profOsc:"#322c47", profCl:"#9a93b5", barra:["#dcd8e6","#8f8bb0"]},
-  {id:"unstable", nombre:"Unstable", proto:[.25,.15,.85,.9,.2,.8,.85],
+  {id:"unstable", nombre:"Inestable", proto:[.25,.15,.85,.9,.2,.8,.85],
    cielo:["#7d7f85","#a0a2a6","#c6c7c9","#e2e1de"], claroB:"#c9cbcd", profOsc:"#232427", profCl:"#96989c", barra:["#d6d7d8","#7d7f85"]},
 ];
 function moodLugar(){

@@ -49,15 +49,15 @@ Las 7 lecturas se clasifican en un ESTADO por prototipos (distancia L1 a firmas 
 
 | Estado | Familia | Firma característica |
 |---|---|---|
-| **Calm** | Azul bruma | luz y pausa plenas + flujo bajo |
-| **Active** | Ámbar | sonido pleno + orientación alta |
-| **Busy** | Teal | actividad con orden, pausa alta |
-| **Crowded** | Terracota | flujo alto + pausa mínima + materia alta |
-| **Balanced** | Verde salvia | balance general + orientación plena |
-| **Dynamic** | Lavanda | orientación mínima + flujo alto |
-| **Unstable** | Grafito | ruido total: sonido/visual/materia altos sin orientación |
+| **Calmado** | Azul bruma | luz y pausa plenas + flujo bajo |
+| **Activo** | Ámbar | sonido pleno + orientación alta |
+| **Ajetreado** | Teal | actividad con orden, pausa alta |
+| **Concurrido** | Terracota | flujo alto + pausa mínima + materia alta |
+| **Equilibrado** | Verde salvia | balance general + orientación plena |
+| **Dinámico** | Lavanda | orientación mínima + flujo alto |
+| **Inestable** | Grafito | ruido total: sonido/visual/materia altos sin orientación |
 
-Nombres en inglés (definidos por el usuario 2026-07-21); el estado tiñe TODO: escenario, cielo, papel, orbes, barras, metros.
+Nombres en ESPAÑOL ("español todo", 2026-07-21; ids internos en inglés estables); el estado tiñe TODO: escenario, cielo, papel, orbes, barras, metros.
 
 El nombre del estado es dato-héroe (reemplazó al sol decorativo). MOODS[]/moodLugar() en código; exports en paridad.
 
