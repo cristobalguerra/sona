@@ -79,6 +79,16 @@ CAPA RADIAL (aditiva, 2026-07-21 — "esto no sustituye nada, se suma"): la DIST
 
 **FUSIÓN — una forma nueva (2026-07-21).** Los círculos no se conectan: se MEZCLAN. Unión implícita metaball `f(p)=Σ (r²/d²)²` con iso=1 — la caída AFILADA (exponente 2, ajuste "margen menor, más pegado a los círculos") hace que la membrana abrace los círculos: cinturas ajustadas en vez de colchón; exponente 3 se descartó porque la membrana desaparece y las esferas vuelven a leerse separadas — el contorno único se extrae por marching squares cada frame (res 4 u, ~0.6 ms) y se suaviza con Catmull-Rom. Donde dos cuerpos se acercan el contorno se funde con redistribución de volumen (cinturas y bulbos que ningún círculo tenía solo), continuidad suave, tensión superficial; lejos, cada uno recupera su círculo exacto (error < 0.2 u). Render en capas: la masa (`#pecMasa`) se llena con el gradiente vertical de luz cenital (`gradPuente`: mezcla(claro,profundo,0.30) → profundo) y los orbes volumétricos viven como BRILLOS perlados recortados dentro de la masa (`clip-path #clipMasa`) — cada lóbulo conserva su perla, las cinturas muestran la membrana. Sombras, grano, blur y densidad intactos. Paridad: canvas usa `Path2D` + `ctx.clip()`, SVG export `clipPath #clipMx`. Siempre UNA forma (tren, roseta, pares y solo: 1 lazo).
 
+## Tipografía modular (apartado 03, 2026-07-21)
+
+Sistema tipográfico paramétrico: **cada letra es datos, no trazos**. Lienzo 200×200 por letra, retícula fija 4×4 (celdas de 50). Módulo base = cápsula `[x,y,w,h]` con radio SIEMPRE la mitad del lado corto (módulo 200×50 → r 25); grosor de trazo constante 50. Alfabeto en `TIPO_LETRAS` (unicase, sin diagonales — abstracción ortogonal tipo fuente modular).
+
+- **Tracking** base −20 (permite conexión), rango −50…80.
+- **Conexión fluida**: se activa cuando la distancia horizontal entre módulos vecinos ≤ `maxDistance` (80) Y hay solapamiento vertical. Grosor: `8 + (50−8)·(1 − dist/maxD)^1.5`. Puente reloj-de-arena (entra 22 u dentro de cada módulo para cubrir la curvatura de las tapas); `curveIntensity` da la profundidad de la curva. Un módulo interpuesto bloquea la conexión. En costuras (solape ≤ 24) el filete solo procede entre barras horizontales de la misma banda.
+- **Parámetros expuestos**: cellSize (escala física del export), tracking, maxDistance, curveIntensity, tinta y fondo (colores propios del apartado — la etiqueta sigue sin edición de color).
+- **Salidas**: SVG prioridad (rects rx + path de puentes, viewBox con margen 50) · Canvas/PNG (roundRect + Path2D) · Copiar SVG. Video no aplica (estático).
+- **Criterio de éxito cumplido**: palabras legibles Y gráficos abstractos con los mismos parámetros (tracking −50 + maxD 160 teje la palabra en una masa líquida).
+
 ## Reglas de contraste
 
 Texto sobre papel: tinta plena o tinta ≥.72 alfa (AA). Los metros nunca llevan texto encima; la cifra de la barra va en tinta sobre el extremo niebla. El logo siempre en tinta sobre cielo (contraste sobrado).

@@ -286,6 +286,18 @@ footer{
   #escenario{min-height:44vh;padding:28px}
   footer{flex-direction:column;gap:2px}
 }
+
+/* ---------- tipografía modular ---------- */
+#tipoCaja{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:5%}
+#tipoCaja svg{max-width:88%;max-height:68vh;width:auto;border-radius:26px;box-shadow:0 24px 60px rgba(30,33,38,.18)}
+#tipoTexto{width:100%;background:transparent;border:1px solid var(--hair);border-radius:10px;padding:9px 11px;font:500 13px/1.4 "Fragment Mono",monospace;color:var(--tinta);letter-spacing:.06em}
+#tipoTexto:focus{outline:none;border-color:var(--acento)}
+.tipoCtl{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:9px}
+.tipoCtl .etq{white-space:nowrap}
+.tipoCtl b{font-weight:600}
+.tipoCtl input[type=range]{flex:1;accent-color:var(--acento)}
+#panel input[type=color]{width:34px;height:22px;border:1px solid var(--hair);border-radius:6px;background:none;padding:1px}
+.pieTipo{margin-top:9px;font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.55}
 </style>
 </head>
 <body>
@@ -316,6 +328,7 @@ footer{
         <g id="gEsq" opacity="0"></g>
       </svg>
       </div>
+      <div id="tipoCaja" class="oculta"></div>
       <div id="etiqueta" class="oculta">
         <div class="etq-cielo" id="etqLogo">
           <svg id="svgPecera" viewBox="0 0 700 310" preserveAspectRatio="none" aria-hidden="true">
@@ -377,6 +390,7 @@ footer{
         <div class="seg" id="vistas">
           <button class="on">Logotipo</button>
           <button>Etiqueta</button>
+          <button>Tipografía</button>
         </div>
       </section>
 
@@ -392,7 +406,21 @@ footer{
       </section>
 
       <section>
-        <h2>Exportar <span class="num">03</span></h2>
+        <h2>Tipografía · sistema modular <span class="num">03</span></h2>
+        <input type="text" id="tipoTexto" maxlength="40" autocomplete="off" spellcheck="false" placeholder="escribe una palabra…">
+        <div class="tipoCtl"><span class="etq">Celda <b id="tipoCellV">50</b>px</span><input type="range" id="tipoCell" min="20" max="100" step="5" value="50"></div>
+        <div class="tipoCtl"><span class="etq">Tracking <b id="tipoTrackV">-20</b>px</span><input type="range" id="tipoTrack" min="-50" max="80" step="5" value="-20"></div>
+        <div class="tipoCtl"><span class="etq">Dist. máx <b id="tipoMaxdV">80</b>px</span><input type="range" id="tipoMaxd" min="0" max="160" step="5" value="80"></div>
+        <div class="tipoCtl"><span class="etq">Curva <b id="tipoCurvaV">60</b>%</span><input type="range" id="tipoCurva" min="0" max="100" step="5" value="60"></div>
+        <div class="fila" style="margin-top:10px;gap:8px">
+          <span class="etq">Tinta</span><input type="color" id="tipoTinta" value="#3d4e60">
+          <span class="etq">Fondo</span><input type="color" id="tipoFondo" value="#f1f0ea">
+        </div>
+        <div class="pieTipo" id="tipoInfo"></div>
+      </section>
+
+      <section>
+        <h2>Exportar <span class="num">04</span></h2>
         <div class="fila" style="margin-bottom:10px">
           <span class="etq">Fondo transparente</span>
           <label class="sw"><input type="checkbox" id="cTrans"><i></i></label>
@@ -1683,21 +1711,17 @@ function refrescarEtiqueta(){
 }
 function cambiarVista(v){
   est.vista=v;
-  const lupa=$("lupa");
-  if(v==="etiqueta"){
-    lupa.classList.add("oculta");          // el escenario cede el foco a la ficha
-    elEtiqueta.classList.remove("oculta");
-    refrescarEtiqueta();
-    pintarPecera();
-  }else{
-    lupa.classList.remove("oculta");
-    elEtiqueta.classList.add("oculta");
-  }
+  $("lupa").classList.toggle("oculta",v!=="logo");   // el escenario cede el foco
+  elEtiqueta.classList.toggle("oculta",v!=="etiqueta");
+  $("tipoCaja").classList.toggle("oculta",v!=="tipo");
+  if(v==="etiqueta"){refrescarEtiqueta();pintarPecera()}
+  if(v==="tipo"&&typeof refrescarTipo==="function")refrescarTipo();
+  const orden=["logo","etiqueta","tipo"];
   document.querySelectorAll("#vistas button").forEach((b,i)=>
-    b.classList.toggle("on",(i===0)===(v==="logo")));
+    b.classList.toggle("on",orden[i]===v));
 }
 document.querySelectorAll("#vistas button").forEach((b,i)=>
-  b.addEventListener("click",()=>cambiarVista(i===0?"logo":"etiqueta")));
+  b.addEventListener("click",()=>cambiarVista(["logo","etiqueta","tipo"][i])));
 $("inpDesc").addEventListener("input",e=>{
   est.descripcion=e.target.value;
   $("etqDesc").textContent=est.descripcion;
@@ -1721,6 +1745,160 @@ function aplicarColores(){
     etq.style.background=est.transparente?"transparent":est.fondo}
 }
 $("cTrans").addEventListener("change",e=>{est.transparente=e.target.checked;aplicarColores()});
+
+/* ---------- tipografía modular: cápsulas + conexión fluida ----------
+   Cada letra es DATOS: lienzo 200×200, retícula 4×4 (celdas de 50),
+   módulos cápsula [x,y,w,h] con radio = mitad del lado corto (un
+   módulo 200×50 → radio 25). El tracking base −20 permite la
+   conexión entre letras; la conexión fluida se activa cuando la
+   distancia horizontal entre módulos vecinos ≤ maxDistance y hay
+   solapamiento vertical:
+       grosor = 8 + (50−8) · (1 − dist/maxD)^1.5
+   Parámetros expuestos: cellSize, tracking, maxDistance,
+   curveIntensity y colores. SVG primero; canvas para PNG. */
+est.tipo={texto:"sona",cell:50,track:-20,maxd:80,curva:0.6,tinta:"#3d4e60",fondo:"#f1f0ea"};
+const TIPO_LETRAS={
+  A:{ancho:200,modulos:[[0,0,200,50],[0,0,50,200],[150,0,50,200],[50,100,100,50]]},
+  B:{ancho:150,modulos:[[0,0,50,200],[0,75,150,50],[0,150,150,50],[100,75,50,125]]},
+  C:{ancho:200,modulos:[[0,0,200,50],[0,0,50,200],[0,150,200,50]]},
+  D:{ancho:150,modulos:[[100,0,50,200],[0,75,150,50],[0,150,150,50],[0,75,50,125]]},
+  E:{ancho:200,modulos:[[0,0,50,200],[0,0,200,50],[0,75,150,50],[0,150,200,50]]},
+  F:{ancho:200,modulos:[[0,0,50,200],[0,0,200,50],[0,75,150,50]]},
+  G:{ancho:200,modulos:[[0,0,200,50],[0,0,50,200],[0,150,200,50],[100,75,100,50],[150,75,50,125]]},
+  H:{ancho:200,modulos:[[0,0,50,200],[150,0,50,200],[0,100,200,50]]},
+  I:{ancho:50,modulos:[[0,0,50,50],[0,100,50,100]]},
+  J:{ancho:150,modulos:[[100,0,50,50],[100,100,50,100],[0,150,150,50]]},
+  K:{ancho:200,modulos:[[0,0,50,200],[100,0,100,50],[0,100,200,50],[150,100,50,100]]},
+  L:{ancho:150,modulos:[[0,0,50,200],[0,150,150,50]]},
+  M:{ancho:200,modulos:[[0,0,50,200],[75,0,50,200],[150,0,50,200],[0,0,200,50]]},
+  N:{ancho:200,modulos:[[0,0,50,200],[150,0,50,200],[0,0,200,50]]},
+  O:{ancho:200,modulos:[[0,0,200,50],[0,150,200,50],[0,0,50,200],[150,0,50,200]]},
+  P:{ancho:200,modulos:[[0,0,50,200],[0,0,200,50],[150,0,50,150],[0,100,200,50]]},
+  Q:{ancho:200,modulos:[[0,0,200,50],[0,0,50,150],[0,100,200,50],[150,0,50,200]]},
+  R:{ancho:200,modulos:[[0,0,50,200],[0,0,200,50],[150,0,50,150],[0,100,200,50],[100,100,50,100]]},
+  S:{ancho:200,modulos:[[0,0,200,50],[0,0,50,125],[0,75,200,50],[150,75,50,125],[0,150,200,50]]},
+  T:{ancho:150,modulos:[[0,0,150,50],[50,0,50,200]]},
+  U:{ancho:200,modulos:[[0,0,50,200],[150,0,50,200],[0,150,200,50]]},
+  V:{ancho:150,modulos:[[0,0,50,150],[100,0,50,150],[50,150,50,50]]},
+  W:{ancho:200,modulos:[[0,0,50,200],[75,0,50,200],[150,0,50,200],[0,150,200,50]]},
+  X:{ancho:200,modulos:[[0,0,50,75],[150,0,50,75],[75,75,50,50],[0,125,50,75],[150,125,50,75]]},
+  Y:{ancho:200,modulos:[[0,0,50,100],[150,0,50,100],[0,75,200,50],[75,100,50,100]]},
+  Z:{ancho:200,modulos:[[0,0,200,50],[150,0,50,125],[0,75,50,125],[0,150,200,50]]},
+  "0":{ancho:150,modulos:[[0,0,150,50],[0,0,50,200],[100,0,50,200],[0,150,150,50]]},
+  "1":{ancho:100,modulos:[[50,0,50,200],[0,0,50,50],[0,150,100,50]]},
+  "2":{ancho:200,modulos:[[0,0,200,50],[150,0,50,125],[0,75,200,50],[0,75,50,125],[0,150,200,50]]},
+  "3":{ancho:200,modulos:[[0,0,200,50],[150,0,50,200],[0,75,200,50],[0,150,200,50]]},
+  "4":{ancho:200,modulos:[[0,0,50,100],[0,75,200,50],[150,0,50,200]]},
+  "5":{ancho:200,modulos:[[0,0,150,50],[0,0,50,125],[0,75,200,50],[150,75,50,125],[0,150,200,50]]},
+  "6":{ancho:200,modulos:[[0,0,50,200],[0,50,200,50],[150,50,50,150],[0,150,200,50]]},
+  "7":{ancho:200,modulos:[[0,0,200,50],[150,0,50,200]]},
+  "8":{ancho:200,modulos:[[0,0,200,50],[0,0,50,200],[150,0,50,200],[0,75,200,50],[0,150,200,50]]},
+  "9":{ancho:150,modulos:[[0,0,150,50],[0,0,50,150],[100,0,50,200],[0,100,150,50]]},
+};
+function tipoModulosPalabra(){
+  const t=est.tipo, res=[], texto=(t.texto||"").toUpperCase();
+  let cx=0, alguna=false;
+  for(const ch of texto){
+    if(ch===" "){cx+=100+t.track;continue}
+    const L=TIPO_LETRAS[ch]; if(!L)continue;
+    for(const m of L.modulos)res.push([cx+m[0],m[1],m[2],m[3]]);
+    cx+=L.ancho+t.track; alguna=true;
+  }
+  return {mods:res, ancho:alguna?Math.max(50,cx-t.track):200};
+}
+function tipoPuente(xL,xR,oy0,oy1,g,ci){
+  /* puente reloj-de-arena: entra 22 u dentro de cada módulo para
+     cubrir la curvatura de las tapas de la cápsula */
+  const x0=xL-22, x1=xR+22;
+  const cy=(oy0+oy1)/2, y1=cy-g/2, y2=cy+g/2, xm=(x0+x1)/2;
+  const q=Math.max(0.5,(x1-x0)/2)*Math.max(0.05,ci), q2=q*0.6;
+  const f=v=>v.toFixed(1);
+  return `M ${f(x0)} ${f(oy0)} C ${f(x0+q)} ${f(oy0)} ${f(xm-q2)} ${f(y1)} ${f(xm)} ${f(y1)} C ${f(xm+q2)} ${f(y1)} ${f(x1-q)} ${f(oy0)} ${f(x1)} ${f(oy0)} L ${f(x1)} ${f(oy1)} C ${f(x1-q)} ${f(oy1)} ${f(xm+q2)} ${f(y2)} ${f(xm)} ${f(y2)} C ${f(xm-q2)} ${f(y2)} ${f(x0+q)} ${f(oy1)} ${f(x0)} ${f(oy1)} Z `;
+}
+function tipoConexiones(mods){
+  const t=est.tipo;
+  if(t.maxd<=0)return "";
+  let out="";
+  for(let i=0;i<mods.length;i++)for(let j=i+1;j<mods.length;j++){
+    let a=mods[i],b=mods[j];
+    if(a[0]+a[2]/2>b[0]+b[2]/2){const tmp=a;a=b;b=tmp}
+    const gap=b[0]-(a[0]+a[2]);
+    if(gap>t.maxd||gap<-24)continue;
+    const oy0=Math.max(a[1],b[1]), oy1=Math.min(a[1]+a[3],b[1]+b[3]);
+    if(oy1-oy0<=0)continue;              /* sin solape vertical → sin conexión */
+    /* en costuras (solape) el filete solo procede entre BARRAS
+       horizontales de la misma banda — ahí sus bordes planos
+       coinciden con los de ambas barras y solo rellenan la muesca
+       entre tapas; en cualquier otra soldadura la pestaña plana
+       asomaría fuera de las tapas redondeadas */
+    if(gap<=0&&!(a[2]>a[3]&&b[2]>b[3]&&Math.abs(a[1]-b[1])<1&&Math.abs(a[3]-b[3])<1))continue;
+    const xL=Math.min(a[0]+a[2],b[0]), xR=Math.max(a[0]+a[2],b[0]);
+    if(gap>0){                           /* ¿otro módulo bloquea el hueco? */
+      let bloq=false;
+      for(let k=0;k<mods.length&&!bloq;k++){
+        if(k===i||k===j)continue;
+        const m=mods[k];
+        bloq=m[0]<xR&&m[0]+m[2]>xL&&Math.min(m[1]+m[3],oy1)-Math.max(m[1],oy0)>0;
+      }
+      if(bloq)continue;
+    }
+    const d=Math.max(0,gap);
+    const g=Math.min(8+(50-8)*Math.pow(1-d/t.maxd,1.5), oy1-oy0);
+    out+=tipoPuente(xL,xR,oy0,oy1,g,t.curva);
+  }
+  return out.trim();
+}
+function svgTipo(){
+  const t=est.tipo;
+  const {mods,ancho}=tipoModulosPalabra();
+  const M=50, F=t.cell/50;
+  const W=Math.round((ancho+2*M)*F), H=Math.round((200+2*M)*F);
+  const caps=mods.map(([x,y,w,h])=>{const r=Math.min(w,h)/2;
+    return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" ry="${r}"/>`}).join("\n    ");
+  const con=tipoConexiones(mods);
+  const fondo=est.transparente?"":`\n  <rect x="${-M}" y="${-M}" width="${ancho+2*M}" height="${200+2*M}" fill="${t.fondo}"/>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="${-M} ${-M} ${ancho+2*M} ${200+2*M}">\n  <!-- sona tipo · sistema modular de cápsulas · celda ${t.cell} · tracking ${t.track} · distMax ${t.maxd} · curva ${t.curva} -->${fondo}\n  <g fill="${t.tinta}">\n    ${caps}\n    ${con?`<path d="${con}"/>`:""}\n  </g>\n</svg>`;
+}
+function pintarTipo(ctx,W){
+  const t=est.tipo;
+  const {mods,ancho}=tipoModulosPalabra();
+  const M=50, w0=ancho+2*M, h0=200+2*M;
+  const k=W/w0, H=Math.round(h0*k);
+  ctx.clearRect(0,0,W,H);
+  if(!est.transparente){ctx.fillStyle=t.fondo;ctx.fillRect(0,0,W,H)}
+  ctx.setTransform(k,0,0,k,M*k,M*k);
+  ctx.fillStyle=t.tinta;
+  for(const [x,y,w,h] of mods){
+    const r=Math.min(w,h)/2;
+    ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();
+  }
+  const con=tipoConexiones(mods);
+  if(con)ctx.fill(new Path2D(con));
+  ctx.setTransform(1,0,0,1,0,0);
+}
+function refrescarTipo(){
+  const caja=$("tipoCaja");
+  caja.innerHTML=svgTipo();
+  const sv=caja.querySelector("svg");
+  const wPx=sv.getAttribute("width"), hPx=sv.getAttribute("height");
+  sv.removeAttribute("width");sv.removeAttribute("height");
+  $("tipoInfo").textContent=`retícula 4×4 · módulo cápsula · svg ${wPx}×${hPx}px`;
+}
+(function construirTipo(){
+  const t=est.tipo;
+  const inp=$("tipoTexto");
+  inp.value=t.texto;
+  inp.addEventListener("input",e=>{t.texto=e.target.value;refrescarTipo()});
+  const liga=(id,prop,fx)=>$(id).addEventListener("input",e=>{
+    t[prop]=fx?fx(+e.target.value):+e.target.value;
+    $(id+"V").textContent=e.target.value;
+    refrescarTipo();
+  });
+  liga("tipoCell","cell");liga("tipoTrack","track");
+  liga("tipoMaxd","maxd");liga("tipoCurva","curva",v=>v/100);
+  $("tipoTinta").addEventListener("input",e=>{t.tinta=e.target.value;refrescarTipo()});
+  $("tipoFondo").addEventListener("input",e=>{t.fondo=e.target.value;refrescarTipo()});
+})();
 
 /* ---------- exportar ---------- */
 function nombreBase(){
@@ -1749,6 +1927,11 @@ function svgActual(){
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${VIEWBOX}">\n  <!-- sona · instrumento vivo · niveles ${Object.entries(est.niveles).map(([k,v])=>k.slice(0,3)+v).join(' ')} · lecturas: ${firmaLecturas()} · R25/módulo 50 intactos -->${fondo}${cuerpo}\n</svg>`;
 }
 $("bSvg").addEventListener("click",()=>{
+  if(est.vista==="tipo"){
+    descargar(new Blob([svgTipo()],{type:"image/svg+xml"}),nombreBase()+"-tipo.svg");
+    avisar("Tipografía SVG descargada");
+    return;
+  }
   if(est.vista==="etiqueta"){
     descargar(new Blob([svgEtiqueta()],{type:"image/svg+xml"}),nombreBase()+"-etiqueta.svg");
     avisar("Etiqueta SVG descargada");
@@ -1758,7 +1941,7 @@ $("bSvg").addEventListener("click",()=>{
   avisar("SVG descargado — frame actual");
 });
 $("bCopiar").addEventListener("click",async()=>{
-  const src=est.vista==="etiqueta"?svgEtiqueta():svgActual();
+  const src=est.vista==="etiqueta"?svgEtiqueta():est.vista==="tipo"?svgTipo():svgActual();
   try{await navigator.clipboard.writeText(src);avisar("SVG copiado al portapapeles")}
   catch(e){avisar("No se pudo copiar")}
 });
@@ -2132,6 +2315,13 @@ function svgEtiqueta(){
 $("bPng").addEventListener("click",()=>{
   const W=+$("selPng").value;
   const cnv=document.createElement("canvas");
+  if(est.vista==="tipo"){
+    const {ancho}=tipoModulosPalabra();
+    cnv.width=W;cnv.height=Math.round(W*(200+100)/(ancho+100));
+    pintarTipo(cnv.getContext("2d"),W);
+    cnv.toBlob(b=>{descargar(b,nombreBase()+"-tipo-"+W+"px.png");avisar("Tipografía PNG "+W+"px descargada")},"image/png");
+    return;
+  }
   if(est.vista==="etiqueta"){
     const Wc=Math.min(W,3800);   // la ficha a 3800 ya es tamaño póster
     cnv.width=Wc;cnv.height=Math.round(Wc*1000/700);
@@ -2146,6 +2336,7 @@ $("bPng").addEventListener("click",()=>{
 });
 $("bWebm").addEventListener("click",async()=>{
   if(est.grabando)return;
+  if(est.vista==="tipo"){avisar("La tipografía es estática — exporta SVG o PNG");return}
   const DUR=12;   // 6 s de fundido identidad→distorsión + 6 s de fluctuación
   const esEtiqueta=est.vista==="etiqueta";
   const W=esEtiqueta?1080:(fis.fusion>0?1920:2100);
