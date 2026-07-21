@@ -384,18 +384,11 @@ footer{
       </section>
 
       <section>
-        <h2>Color <span class="num">03</span></h2>
-        <div class="colores" style="grid-template-columns:1fr">
-          <div class="colcaja"><span>Tinta</span><input type="color" id="colTinta" value="#3d4e60"></div>
-        </div>
-        <div class="fila">
+        <h2>Exportar <span class="num">03</span></h2>
+        <div class="fila" style="margin-bottom:10px">
           <span class="etq">Fondo transparente</span>
           <label class="sw"><input type="checkbox" id="cTrans"><i></i></label>
         </div>
-      </section>
-
-      <section>
-        <h2>Exportar <span class="num">04</span></h2>
         <div class="expgrid">
           <div class="ancho">
             <select id="selPng">
@@ -1620,7 +1613,6 @@ function aplicarColores(){
   if(etq){etq.style.color=est.tinta;etq.style.borderColor=est.tinta;
     etq.style.background=est.transparente?"transparent":est.fondo}
 }
-$("colTinta").addEventListener("input",e=>{est.tinta=e.target.value;aplicarColores()});
 $("cTrans").addEventListener("change",e=>{est.transparente=e.target.checked;aplicarColores()});
 
 /* ---------- exportar ---------- */
