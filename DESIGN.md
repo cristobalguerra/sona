@@ -43,6 +43,22 @@ Rampa de medidores (las 7 dimensiones comparten): `RAMPA_MET = #d6dbdf → #7d93
 - `prefers-reduced-motion`: la masa queda congelada en la identidad exacta (rampa 0); transitions CSS a .01ms. La grabación de video reactiva el movimiento (petición explícita).
 - Easing UI: transiciones cortas (.12–.25s); sin bounce.
 
+## Moods: los 7 estados del lugar (2026-07-21)
+
+Las 7 lecturas se clasifican en un ESTADO por prototipos (distancia L1 a firmas características, determinista) y el estado tiñe la etiqueta completa (cielo, orbes, barra) con su familia silenciada:
+
+| Estado | Familia | Firma característica |
+|---|---|---|
+| Equilibrio | Verde salvia | balance general + orientación plena |
+| Resonancia | Ámbar | sonido pleno + orientación alta |
+| Compresión | Terracota | flujo alto + pausa mínima + materia alta |
+| Expansión | Azul bruma | luz y pausa plenas + flujo bajo |
+| Convergencia | Teal | orden creciente, pausa alta |
+| Divergencia | Lavanda | orientación mínima + flujo alto |
+| Fragmentación | Grafito | ruido total: sonido/visual/materia altos sin orientación |
+
+El nombre del estado es dato-héroe (reemplazó al sol decorativo). MOODS[]/moodLugar() en código; exports en paridad.
+
 ## El organismo (gramática del círculo — v2 definitiva)
 
 Todo en mínimo = el puro círculo individual existiendo. Diccionario dictado por el usuario (2026-07-20, referencia: racimo de orbes suaves):

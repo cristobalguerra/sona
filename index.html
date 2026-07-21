@@ -167,6 +167,7 @@ textarea::placeholder{color:var(--tinta);opacity:.35}
   font-family:var(--grot);font-weight:200;font-size:58px;line-height:1;letter-spacing:-.02em;
 }
 .etq-num small{font-size:22px;font-weight:300;opacity:.4;margin-left:2px}
+.etq-mood{font-family:var(--grot);font-weight:300;font-size:23px;line-height:1.1}
 .etq-hero-l{font-size:9px;letter-spacing:.16em;text-transform:uppercase;opacity:.78;margin-bottom:4px}
 .etq-dims{
   display:grid;grid-template-columns:1fr 1fr;column-gap:22px;row-gap:14px;
@@ -347,7 +348,10 @@ footer{
               <div class="etq-hero-l">Índice del lugar</div>
               <div class="etq-num" id="etqNum">—</div>
             </div>
-            <svg id="etqSol" width="64" height="46" viewBox="0 0 64 46" fill="none" stroke="currentColor" stroke-width="1.4"></svg>
+            <div style="text-align:right">
+              <div class="etq-hero-l">Estado</div>
+              <div class="etq-mood" id="etqMood">—</div>
+            </div>
           </div>
           <div id="etqDims" class="etq-dims"></div>
           <div class="etq-desc">
@@ -1426,12 +1430,45 @@ function circulosOrganismo(){
 }
 function densidadTinta(){ return paramsOrganismo().dens }
 function desenfoqueOrganismo(){ return paramsOrganismo().blur }
+/* ---------- MOODS: el estado del lugar ----------
+   Las 7 lecturas se clasifican en uno de 7 estados; cada estado
+   tiñe la etiqueta completa con su familia de color (silenciada,
+   en el registro de calma del sistema). Clasificador por
+   prototipos: gana el estado cuya firma esté más cerca de la
+   lectura (distancia L1, determinista). Orden [L,P,S,V,O,F,M]. */
+const MOODS=[
+  {id:"equilibrio",   nombre:"Equilibrio",    proto:[.5,.6,.35,.35,.9,.4,.35],
+   cielo:["#7fa08c","#a3b8a6","#cfd8cc","#e7e6da"], claroB:"#c9d8cd", profOsc:"#22352b", profCl:"#8fa89a", barra:["#d6ded2","#7fa08c"]},
+  {id:"resonancia",   nombre:"Resonancia",    proto:[.5,.4,.9,.5,.85,.5,.4],
+   cielo:["#a8946a","#c4b391","#ded4b8","#efe9d8"], claroB:"#e0d6ba", profOsc:"#3d3320", profCl:"#a89a78", barra:["#e6ddc2","#a8946a"]},
+  {id:"compresion",   nombre:"Compresión",    proto:[.3,.15,.6,.75,.5,.85,.7],
+   cielo:["#a07868","#bd9a8b","#d8c0b3","#ecdfd6"], claroB:"#dcc6ba", profOsc:"#3c2620", profCl:"#a5847a", barra:["#e4d2c8","#a07868"]},
+  {id:"expansion",    nombre:"Expansión",     proto:[.85,.8,.3,.3,.75,.25,.3],
+   cielo:["#8fa0b4","#aebbc6","#cfd4d4","#e3e0d8"], claroB:"#c6d4e0", profOsc:"#1f2c39", profCl:"#8ea2b5", barra:["#d6dbdf","#7d93ab"]},
+  {id:"convergencia", nombre:"Convergencia",  proto:[.6,.75,.45,.5,.8,.6,.5],
+   cielo:["#6f9a9b","#9bbcbb","#c6d7d4","#e2e7e0"], claroB:"#c4d8d5", profOsc:"#1f3a3a", profCl:"#84a6a4", barra:["#d2e0dc","#6f9a9b"]},
+  {id:"divergencia",  nombre:"Divergencia",   proto:[.45,.3,.55,.6,.15,.75,.5],
+   cielo:["#8f8bb0","#afaac8","#d0cddf","#e8e5ec"], claroB:"#cfcadf", profOsc:"#322c47", profCl:"#9a93b5", barra:["#dcd8e6","#8f8bb0"]},
+  {id:"fragmentacion",nombre:"Fragmentación", proto:[.25,.15,.85,.9,.2,.8,.85],
+   cielo:["#7d7f85","#a0a2a6","#c6c7c9","#e2e1de"], claroB:"#c9cbcd", profOsc:"#232427", profCl:"#96989c", barra:["#d6d7d8","#7d7f85"]},
+];
+function moodLugar(){
+  const v=DIMENSIONES.map(d=>(est.niveles[d]-1)/4);
+  let mejor=MOODS[0], mejorD=1e9;
+  for(const m of MOODS){
+    let d=0;
+    for(let i=0;i<7;i++)d+=Math.abs(v[i]-m.proto[i]);
+    if(d<mejorD){mejorD=d;mejor=m}
+  }
+  return mejor;
+}
 function coloresOrbe(){
-  /* volumen: highlight cenital → base profunda. La base NUNCA se
-     aclara del todo: el orbe siempre se despega del cielo */
+  /* volumen: highlight cenital → base profunda, en la familia del
+     MOOD actual. La base nunca se aclara del todo. */
+  const m=moodLugar();
   return {
-    claro: mezclaHex("#c6d4e0","#ffffff",lect.luz),
-    profundo: mezclaHex("#1f2c39","#8ea2b5",lect.luz),
+    claro: mezclaHex(m.claroB,"#ffffff",lect.luz),
+    profundo: mezclaHex(m.profOsc,m.profCl,lect.luz),
   };
 }
 let orbeEls=[], sombraEls=[];
@@ -1502,17 +1539,6 @@ const elEtiqueta=$("etiqueta");
       fijarNivel(dim, est.niveles[dim]%5+1));   // clic = subir nivel (cicla)
     cont.appendChild(c);
   }
-  /* sol de líneas (abanico tipo referencia) */
-  const sol=$("etqSol");
-  let rayos="";
-  for(let a=-90;a<=90;a+=15){
-    const rad=a*Math.PI/180;
-    const x1=32+Math.sin(rad)*11, y1=44-Math.cos(rad)*11;
-    const x2=32+Math.sin(rad)*(a%45===0?20:16), y2=44-Math.cos(rad)*(a%45===0?20:16);
-    rayos+=`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
-  }
-  rayos+=`<line x1="2" y1="44" x2="14" y2="44"/><line x1="50" y1="44" x2="62" y2="44"/>`;
-  sol.innerHTML=rayos;
 })();
 function refrescarEtiqueta(){
   document.querySelectorAll("#etiqueta .etq-d").forEach(c=>{
@@ -1521,9 +1547,16 @@ function refrescarEtiqueta(){
     c.querySelector(".metro i").style.top=`calc(${((5-n+0.5)/5*100).toFixed(1)}% - 1px)`;
   });
   const pct=indiceLugar();
+  const mood=moodLugar();
   $("etqNum").innerHTML=`${pct}<small>%</small>`;
+  $("etqMood").textContent=mood.nombre;
   $("etqPct").innerHTML=`${pct}<small>%</small>`;
   $("etqTapa").style.width=(100-pct)+"%";
+  const [c1,c2,c3,c4]=mood.cielo;
+  document.querySelector(".etq-cielo").style.background=
+    `linear-gradient(180deg,${c1} 0%,${c2} 42%,${c3} 74%,${c4} 100%)`;
+  document.querySelector(".etq-barra").style.background=
+    `linear-gradient(90deg,${mood.barra[0]},${mood.barra[1]})`;
   $("etqFecha").textContent=fechaHoy();
   $("etqPie").innerHTML=`<span>sona · instrumento del lugar</span><span>${firmaLecturas()}</span>`;
   pintarPecera();
@@ -1724,9 +1757,10 @@ function pintarEtiqueta(ctx,W){
   ctx.fillStyle=est.fondo;ctx.fillRect(0,0,W,H);
   /* cielo degradado (el aire de la pecera) */
   const SKY=310*U;
+  const moodE=moodLugar();
   const gr=ctx.createLinearGradient(0,0,0,SKY);
-  gr.addColorStop(0,"#8fa0b4");gr.addColorStop(.42,"#aebbc6");
-  gr.addColorStop(.74,"#cfd4d4");gr.addColorStop(1,"#e3e0d8");
+  gr.addColorStop(0,moodE.cielo[0]);gr.addColorStop(.42,moodE.cielo[1]);
+  gr.addColorStop(.74,moodE.cielo[2]);gr.addColorStop(1,moodE.cielo[3]);
   ctx.fillStyle=gr;ctx.fillRect(0,0,W,SKY);
   /* el organismo del lugar */
   ctx.save();
@@ -1792,16 +1826,14 @@ function pintarEtiqueta(ctx,W){
   ctx.font=grot(300,22);ctx.globalAlpha=.4;
   ctx.fillText("%",40*U+wNum+4*U,SKY+112*U);
   ctx.globalAlpha=1;
-  /* sol de líneas */
-  ctx.strokeStyle=est.tinta;ctx.lineWidth=1.4*U;
-  const sx=W-76*U, sy=SKY+116*U;
-  for(let a=-90;a<=90;a+=15){
-    const rad=a*Math.PI/180, r2=(a%45===0?20:16);
-    ctx.beginPath();
-    ctx.moveTo(sx+Math.sin(rad)*11*U, sy-Math.cos(rad)*11*U);
-    ctx.lineTo(sx+Math.sin(rad)*r2*U, sy-Math.cos(rad)*r2*U);
-    ctx.stroke();
-  }
+  /* estado del lugar (dato-héroe derecho) */
+  ctx.fillStyle=est.tinta;
+  ctx.globalAlpha=.78;ctx.font=mono(9);
+  const etiqEstado="ESTADO";
+  ctx.fillText(etiqEstado,W-40*U-ctx.measureText(etiqEstado).width,SKY+66*U);
+  ctx.globalAlpha=1;
+  ctx.font=grot(300,23);
+  ctx.fillText(moodE.nombre,W-40*U-ctx.measureText(moodE.nombre).width,SKY+96*U);
   /* dimensiones en 2 columnas */
   const y0=SKY+150*U, colW=(W-80*U)/2, filaH=64*U;
   ctx.beginPath();ctx.moveTo(40*U,y0);ctx.lineTo(W-40*U,y0);
@@ -1849,7 +1881,7 @@ function pintarEtiqueta(ctx,W){
   /* barra índice */
   const yB=yD+118*U, bh=42*U;
   const gb=ctx.createLinearGradient(40*U,0,W-40*U,0);
-  gb.addColorStop(0,"#d6dbdf");gb.addColorStop(1,"#7d93ab");
+  gb.addColorStop(0,moodE.barra[0]);gb.addColorStop(1,moodE.barra[1]);
   ctx.fillStyle=gb;
   ctx.beginPath();ctx.roundRect(40*U,yB,W-80*U,bh,13*U);ctx.fill();
   /* tapa (lo que falta para 100) */
@@ -1900,11 +1932,7 @@ function svgEtiqueta(){
         .map((ln,i)=>`<text x="40" y="${yD+42+i*21}" class="cuerpo">${esc(ln)}</text>`).join("\n  ")
     : [0,1].map(i=>`<text x="40" y="${yD+42+i*21}" class="cuerpo" opacity=".3">${"· ".repeat(40)}</text>`).join("\n  ");
   const yB=yD+118;
-  let sol="";
-  for(let a=-90;a<=90;a+=15){
-    const rad=a*Math.PI/180, r2=(a%45===0?20:16), sx=W-76, sy=SKY+116;
-    sol+=`<line x1="${(sx+Math.sin(rad)*11).toFixed(1)}" y1="${(sy-Math.cos(rad)*11).toFixed(1)}" x2="${(sx+Math.sin(rad)*r2).toFixed(1)}" y2="${(sy-Math.cos(rad)*r2).toFixed(1)}"/>`;
-  }
+
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}">
   <style>
     text{font-family:"Fragment Mono",ui-monospace,monospace;fill:${est.tinta}}
@@ -1920,11 +1948,11 @@ function svgEtiqueta(){
     <clipPath id="marco"><rect width="${W}" height="${H}" rx="26"/></clipPath>
     <clipPath id="pecera"><rect width="${W}" height="${SKY}"/></clipPath>
     <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#8fa0b4"/><stop offset=".42" stop-color="#aebbc6"/>
-      <stop offset=".74" stop-color="#cfd4d4"/><stop offset="1" stop-color="#e3e0d8"/>
+      <stop offset="0" stop-color="${moodLugar().cielo[0]}"/><stop offset=".42" stop-color="${moodLugar().cielo[1]}"/>
+      <stop offset=".74" stop-color="${moodLugar().cielo[2]}"/><stop offset="1" stop-color="${moodLugar().cielo[3]}"/>
     </linearGradient>
     <linearGradient id="barra" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#d6dbdf"/><stop offset="1" stop-color="#7d93ab"/>
+      <stop offset="0" stop-color="${moodLugar().barra[0]}"/><stop offset="1" stop-color="${moodLugar().barra[1]}"/>
     </linearGradient>
     ${defsDim}
   </defs>
@@ -1949,7 +1977,8 @@ function svgEtiqueta(){
     <text x="${W-40}" y="${SKY+38}" class="cab fecha" text-anchor="end">${fechaHoy()}</text>
     <text x="40" y="${SKY+70}" class="lab">ÍNDICE DEL LUGAR</text>
     <text x="40" y="${SKY+122}" class="num">${pct}<tspan class="numS">%</tspan></text>
-    <g stroke="${est.tinta}" stroke-width="1.4">${sol}</g>
+    <text x="${W-40}" y="${SKY+70}" class="lab" text-anchor="end">ESTADO</text>
+    <text x="${W-40}" y="${SKY+100}" class="val" style="font-size:23px" text-anchor="end">${moodLugar().nombre}</text>
     <line x1="40" y1="${SKY+150}" x2="${W-40}" y2="${SKY+150}" stroke="${est.tinta}" stroke-width="1" opacity=".14"/>
     ${filas}
     <line x1="40" y1="${yD}" x2="${W-40}" y2="${yD}" stroke="${est.tinta}" stroke-width="1" opacity=".14"/>
