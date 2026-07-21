@@ -326,6 +326,10 @@ footer{
                 <stop id="gOrbe1b" offset="0.24"/>
                 <stop id="gOrbe2" offset="1"/>
               </radialGradient>
+              <linearGradient id="gradPuente" gradientUnits="userSpaceOnUse" x1="0" y1="70" x2="0" y2="300">
+                <stop id="gPu1" offset="0"/>
+                <stop id="gPu2" offset="1"/>
+              </linearGradient>
               <radialGradient id="gradSombra">
                 <stop offset="0" stop-color="#1f2c39" stop-opacity=".28"/>
                 <stop offset=".55" stop-color="#1f2c39" stop-opacity=".12"/>
@@ -334,7 +338,7 @@ footer{
               <filter id="fSombra" x="-60%" y="-200%" width="220%" height="500%"><feGaussianBlur stdDeviation="7"/></filter>
             </defs>
             <g id="pecSombras" filter="url(#fSombra)"></g>
-            <g id="pecOrbes"></g>
+            <g id="pecCuerpo"><path id="pecPuentes" fill="url(#gradPuente)"/><g id="pecOrbes"></g></g>
           </svg>
         </div>
         <div class="etq-cuerpo">
@@ -1465,6 +1469,53 @@ function circulosOrganismo(){
   out.sort((A,B)=>A[1]-B[1]);
   return out;
 }
+/* ---------- fusión morfológica: puentes metaball ----------
+   Nodos de fusión implícitos en cada circunferencia: cuando dos
+   círculos entran al umbral, nace un puente con continuidad de
+   curvatura (anclas SOBRE los círculos, asas tangentes) y cintura
+   de tensión superficial. La fuerza depende de la proximidad:
+   los puentes aparecen, engordan y se disuelven gradualmente.
+   Círculos + puentes en un solo relleno = cuerpo coherente. */
+function puenteMetaball(x1,y1,r1,x2,y2,r2){
+  const v=0.55, asa=2.3;
+  const maxD=(r1+r2)*1.4;
+  const d=Math.hypot(x2-x1,y2-y1);
+  if(d<=0.1||d>maxD||d<=Math.abs(r1-r2)*1.02)return null;
+  let u1=0,u2=0;
+  if(d<r1+r2){
+    u1=Math.acos((r1*r1+d*d-r2*r2)/(2*r1*d));
+    u2=Math.acos((r2*r2+d*d-r1*r1)/(2*r2*d));
+  }
+  const ang=Math.atan2(y2-y1,x2-x1);
+  const maxAb=Math.acos(Math.max(-1,Math.min(1,(r1-r2)/d)));
+  const a1=ang+u1+(maxAb-u1)*v;
+  const a2=ang-u1-(maxAb-u1)*v;
+  const a3=ang+Math.PI-u2-(Math.PI-u2-maxAb)*v;
+  const a4=ang-Math.PI+u2+(Math.PI-u2-maxAb)*v;
+  const pt=(x,y,a,r)=>[x+r*Math.cos(a), y+r*Math.sin(a)];
+  const p1=pt(x1,y1,a1,r1), p2=pt(x1,y1,a2,r1);
+  const p3=pt(x2,y2,a3,r2), p4=pt(x2,y2,a4,r2);
+  const fuerza=Math.max(0,Math.min(1,(maxD-d)/(maxD-(r1+r2)*0.8)));
+  const dist13=Math.hypot(p1[0]-p3[0],p1[1]-p3[1]);
+  const lado=Math.min(v*asa, dist13/(r1+r2)*asa)*Math.min(1,d*2/(r1+r2))*(0.55+0.45*fuerza);
+  const d1=r1*lado, d2=r2*lado;
+  const h1=pt(p1[0],p1[1],a1-Math.PI/2,d1);
+  const h2=pt(p2[0],p2[1],a2+Math.PI/2,d1);
+  const h3=pt(p3[0],p3[1],a3+Math.PI/2,d2);
+  const h4=pt(p4[0],p4[1],a4-Math.PI/2,d2);
+  const F=n=>n.toFixed(1);
+  return `M ${F(p1[0])} ${F(p1[1])} C ${F(h1[0])} ${F(h1[1])} ${F(h3[0])} ${F(h3[1])} ${F(p3[0])} ${F(p3[1])} L ${F(p4[0])} ${F(p4[1])} C ${F(h4[0])} ${F(h4[1])} ${F(h2[0])} ${F(h2[1])} ${F(p2[0])} ${F(p2[1])} Z`;
+}
+function puentesOrganismo(lista){
+  const l=lista||circulosOrganismo();
+  let d="";
+  for(let i=0;i<l.length;i++)
+    for(let j=i+1;j<l.length;j++){
+      const b=puenteMetaball(l[i][0],l[i][1],l[i][2],l[j][0],l[j][1],l[j][2]);
+      if(b)d+=b+" ";
+    }
+  return d.trim();
+}
 function densidadTinta(){ return paramsOrganismo().dens }
 function desenfoqueOrganismo(){ return paramsOrganismo().blur }
 
@@ -1523,12 +1574,17 @@ function pintarPecera(){
   $("gOrbe1").setAttribute("stop-color",col.claro);
   $("gOrbe1b").setAttribute("stop-color",col.claro);
   $("gOrbe2").setAttribute("stop-color",col.profundo);
-  g.setAttribute("fill-opacity",densidadTinta().toFixed(2));
+  /* puentes de fusión con la misma luz cenital (claro arriba) */
+  $("pecPuentes").setAttribute("d",puentesOrganismo(lista));
+  $("gPu1").setAttribute("stop-color",mezclaHex(col.claro,col.profundo,0.35));
+  $("gPu2").setAttribute("stop-color",col.profundo);
+  const cuerpo=$("pecCuerpo");
+  cuerpo.setAttribute("fill-opacity",densidadTinta().toFixed(2));
   const bl=desenfoqueOrganismo();
   if(bl>0.2){
     $("feBlurOrg").setAttribute("stdDeviation",bl.toFixed(1));
-    g.setAttribute("filter","url(#fBlurOrg)");
-  }else g.removeAttribute("filter");
+    cuerpo.setAttribute("filter","url(#fBlurOrg)");
+  }else cuerpo.removeAttribute("filter");
 }
 
 /* ---------- etiqueta: ficha de análisis ---------- */
@@ -1795,6 +1851,20 @@ function pintarEtiqueta(ctx,W){
   const colE=coloresOrbe();
   const blE=desenfoqueOrganismo();
   if(blE>0.2)ctx.filter=`blur(${(blE*U).toFixed(1)}px)`;
+  /* puentes de fusión (misma luz vertical) */
+  {
+    const listaE=circulosOrganismo();
+    const dPu=puentesOrganismo(listaE);
+    if(dPu){
+      const gPu=ctx.createLinearGradient(0,70*U,0,300*U);
+      gPu.addColorStop(0,mezclaHex(colE.claro,colE.profundo,0.35));
+      gPu.addColorStop(1,colE.profundo);
+      ctx.fillStyle=gPu;
+      ctx.setTransform(U,0,0,U,0,0);
+      ctx.fill(new Path2D(dPu),"nonzero");
+      ctx.setTransform(1,0,0,1,0,0);
+    }
+  }
   for(const [ox,oy,or] of circulosOrganismo()){
     const gO=ctx.createRadialGradient(ox*U,(oy-or*0.72)*U,or*0.05*U, ox*U,(oy-or*0.72)*U,or*1.84*U);
     gO.addColorStop(0,colE.claro);gO.addColorStop(0.24,colE.claro);gO.addColorStop(1,colE.profundo);
@@ -1969,14 +2039,18 @@ function svgEtiqueta(){
     <g clip-path="url(#pecera)">
       ${desenfoqueOrganismo()>0.2?`<filter id="ob" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="${desenfoqueOrganismo().toFixed(1)}"/></filter>`:""}
       <radialGradient id="gOrbEx" cx="50%" cy="14%" r="92%"><stop offset="0" stop-color="${coloresOrbe().claro}"/><stop offset="0.24" stop-color="${coloresOrbe().claro}"/><stop offset="1" stop-color="${coloresOrbe().profundo}"/></radialGradient>
+      <linearGradient id="gPuEx" gradientUnits="userSpaceOnUse" x1="0" y1="70" x2="0" y2="300"><stop offset="0" stop-color="${mezclaHex(coloresOrbe().claro,coloresOrbe().profundo,0.35)}"/><stop offset="1" stop-color="${coloresOrbe().profundo}"/></linearGradient>
       <radialGradient id="gSomEx"><stop offset="0" stop-color="#1f2c39" stop-opacity=".28"/><stop offset=".55" stop-color="#1f2c39" stop-opacity=".12"/><stop offset="1" stop-color="#1f2c39" stop-opacity="0"/></radialGradient>
       <filter id="fSomEx" x="-60%" y="-200%" width="220%" height="500%"><feGaussianBlur stdDeviation="7"/></filter>
       <filter id="gnEx"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.5 0"/></filter>
       ${(()=>{const l=circulosOrganismo();const ys=l.map(c=>c[1]);const yMin=Math.min(...ys),yMax=Math.max(...ys);
         return '<g filter="url(#fSomEx)">'+l.map(([x,y,r])=>{const d01=(y-yMin)/((yMax-yMin)||1);const rx=r*(0.9+0.5*d01);
           return `<ellipse cx="${x.toFixed(1)}" cy="274" rx="${rx.toFixed(1)}" ry="${(rx*0.16).toFixed(1)}" fill="url(#gSomEx)" opacity="${(0.05+0.05*d01).toFixed(2)}"/>`;}).join("")+'</g>';})()}
-      <g fill="url(#gOrbEx)" fill-opacity="${densidadTinta().toFixed(2)}"${desenfoqueOrganismo()>0.2?' filter="url(#ob)"':''}>
+      <g fill-opacity="${densidadTinta().toFixed(2)}"${desenfoqueOrganismo()>0.2?' filter="url(#ob)"':''}>
+        <path d="${puentesOrganismo()}" fill="url(#gPuEx)"/>
+        <g fill="url(#gOrbEx)">
         ${circulosOrganismo().map(([x,y,r])=>`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}"/>`).join("")}
+        </g>
       </g>
       <rect width="${W}" height="${SKY}" filter="url(#gnEx)" opacity=".35" style="mix-blend-mode:overlay"/>
     </g>
