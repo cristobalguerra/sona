@@ -1319,6 +1319,42 @@ function aplicarGoo(){
 
 /* ---------- controles restantes ---------- */
 /* las 7 dimensiones en niveles 1–5 (celdas tipo medidor) */
+/* ---------- MOODS: el estado del lugar ----------
+   Las 7 lecturas se clasifican en uno de 7 estados; cada estado
+   tiñe la etiqueta completa con su familia de color (silenciada,
+   en el registro de calma del sistema). Clasificador por
+   prototipos: gana el estado cuya firma esté más cerca de la
+   lectura (distancia L1, determinista). Orden [L,P,S,V,O,F,M]. */
+const MOODS=[
+  {id:"equilibrio",   nombre:"Equilibrio",    proto:[.5,.6,.35,.35,.9,.4,.35],
+   cielo:["#7fa08c","#a3b8a6","#cfd8cc","#e7e6da"], claroB:"#c9d8cd", profOsc:"#22352b", profCl:"#8fa89a", barra:["#d6ded2","#7fa08c"]},
+  {id:"resonancia",   nombre:"Resonancia",    proto:[.5,.4,.9,.5,.85,.5,.4],
+   cielo:["#a8946a","#c4b391","#ded4b8","#efe9d8"], claroB:"#e0d6ba", profOsc:"#3d3320", profCl:"#a89a78", barra:["#e6ddc2","#a8946a"]},
+  {id:"compresion",   nombre:"Compresión",    proto:[.3,.15,.6,.75,.5,.85,.7],
+   cielo:["#a07868","#bd9a8b","#d8c0b3","#ecdfd6"], claroB:"#dcc6ba", profOsc:"#3c2620", profCl:"#a5847a", barra:["#e4d2c8","#a07868"]},
+  {id:"expansion",    nombre:"Expansión",     proto:[.85,.8,.3,.3,.75,.25,.3],
+   cielo:["#8fa0b4","#aebbc6","#cfd4d4","#e3e0d8"], claroB:"#c6d4e0", profOsc:"#1f2c39", profCl:"#8ea2b5", barra:["#d6dbdf","#7d93ab"]},
+  {id:"convergencia", nombre:"Convergencia",  proto:[.6,.75,.45,.5,.8,.6,.5],
+   cielo:["#6f9a9b","#9bbcbb","#c6d7d4","#e2e7e0"], claroB:"#c4d8d5", profOsc:"#1f3a3a", profCl:"#84a6a4", barra:["#d2e0dc","#6f9a9b"]},
+  {id:"divergencia",  nombre:"Divergencia",   proto:[.45,.3,.55,.6,.15,.75,.5],
+   cielo:["#8f8bb0","#afaac8","#d0cddf","#e8e5ec"], claroB:"#cfcadf", profOsc:"#322c47", profCl:"#9a93b5", barra:["#dcd8e6","#8f8bb0"]},
+  {id:"fragmentacion",nombre:"Fragmentación", proto:[.25,.15,.85,.9,.2,.8,.85],
+   cielo:["#7d7f85","#a0a2a6","#c6c7c9","#e2e1de"], claroB:"#c9cbcd", profOsc:"#232427", profCl:"#96989c", barra:["#d6d7d8","#7d7f85"]},
+];
+function moodLugar(){
+  const v=DIMENSIONES.map(d=>(est.niveles[d]-1)/4);
+  let mejor=MOODS[0], mejorD=1e9;
+  for(const m of MOODS){
+    let d=0;
+    for(let i=0;i<7;i++)d+=Math.abs(v[i]-m.proto[i]);
+    if(d<mejorD){mejorD=d;mejor=m}
+  }
+  return mejor;
+}
+function papelMood(){
+  /* el papel de la ficha toma un tinte sutil del estado */
+  return mezclaHex(est.fondo, moodLugar().cielo[3], 0.5);
+}
 const ETIQ={luz:"Luz",pausa:"Pausa",sonido:"Sonido",visual:"Visual",orientacion:"Orientación",flujo:"Flujo",materia:"Materia"};
 function aplicarLecturas(){
   fis.fusion=2+lect.visual*15;
@@ -1333,11 +1369,11 @@ function fijarNivel(dim,n){
   refrescarNiveles();
 }
 function refrescarNiveles(){
+  const rampa=moodLugar().barra;
   document.querySelectorAll("#dims .niv").forEach(div=>{
     const dim=div.dataset.dim, n=est.niveles[dim];
-    const [cA,cB]=DIM_COL[dim];
     [...div.children].forEach((b,i)=>{
-      const col=mezclaHex(cA,cB,i/4);
+      const col=mezclaHex(rampa[0],rampa[1],i/4);
       b.classList.toggle("on",i<n);
       b.style.background=(i<n)?col:col+"2b";
     });
@@ -1430,38 +1466,7 @@ function circulosOrganismo(){
 }
 function densidadTinta(){ return paramsOrganismo().dens }
 function desenfoqueOrganismo(){ return paramsOrganismo().blur }
-/* ---------- MOODS: el estado del lugar ----------
-   Las 7 lecturas se clasifican en uno de 7 estados; cada estado
-   tiñe la etiqueta completa con su familia de color (silenciada,
-   en el registro de calma del sistema). Clasificador por
-   prototipos: gana el estado cuya firma esté más cerca de la
-   lectura (distancia L1, determinista). Orden [L,P,S,V,O,F,M]. */
-const MOODS=[
-  {id:"equilibrio",   nombre:"Equilibrio",    proto:[.5,.6,.35,.35,.9,.4,.35],
-   cielo:["#7fa08c","#a3b8a6","#cfd8cc","#e7e6da"], claroB:"#c9d8cd", profOsc:"#22352b", profCl:"#8fa89a", barra:["#d6ded2","#7fa08c"]},
-  {id:"resonancia",   nombre:"Resonancia",    proto:[.5,.4,.9,.5,.85,.5,.4],
-   cielo:["#a8946a","#c4b391","#ded4b8","#efe9d8"], claroB:"#e0d6ba", profOsc:"#3d3320", profCl:"#a89a78", barra:["#e6ddc2","#a8946a"]},
-  {id:"compresion",   nombre:"Compresión",    proto:[.3,.15,.6,.75,.5,.85,.7],
-   cielo:["#a07868","#bd9a8b","#d8c0b3","#ecdfd6"], claroB:"#dcc6ba", profOsc:"#3c2620", profCl:"#a5847a", barra:["#e4d2c8","#a07868"]},
-  {id:"expansion",    nombre:"Expansión",     proto:[.85,.8,.3,.3,.75,.25,.3],
-   cielo:["#8fa0b4","#aebbc6","#cfd4d4","#e3e0d8"], claroB:"#c6d4e0", profOsc:"#1f2c39", profCl:"#8ea2b5", barra:["#d6dbdf","#7d93ab"]},
-  {id:"convergencia", nombre:"Convergencia",  proto:[.6,.75,.45,.5,.8,.6,.5],
-   cielo:["#6f9a9b","#9bbcbb","#c6d7d4","#e2e7e0"], claroB:"#c4d8d5", profOsc:"#1f3a3a", profCl:"#84a6a4", barra:["#d2e0dc","#6f9a9b"]},
-  {id:"divergencia",  nombre:"Divergencia",   proto:[.45,.3,.55,.6,.15,.75,.5],
-   cielo:["#8f8bb0","#afaac8","#d0cddf","#e8e5ec"], claroB:"#cfcadf", profOsc:"#322c47", profCl:"#9a93b5", barra:["#dcd8e6","#8f8bb0"]},
-  {id:"fragmentacion",nombre:"Fragmentación", proto:[.25,.15,.85,.9,.2,.8,.85],
-   cielo:["#7d7f85","#a0a2a6","#c6c7c9","#e2e1de"], claroB:"#c9cbcd", profOsc:"#232427", profCl:"#96989c", barra:["#d6d7d8","#7d7f85"]},
-];
-function moodLugar(){
-  const v=DIMENSIONES.map(d=>(est.niveles[d]-1)/4);
-  let mejor=MOODS[0], mejorD=1e9;
-  for(const m of MOODS){
-    let d=0;
-    for(let i=0;i<7;i++)d+=Math.abs(v[i]-m.proto[i]);
-    if(d<mejorD){mejorD=d;mejor=m}
-  }
-  return mejor;
-}
+
 function coloresOrbe(){
   /* volumen: highlight cenital → base profunda, en la familia del
      MOOD actual. La base nunca se aclara del todo. */
@@ -1557,6 +1562,13 @@ function refrescarEtiqueta(){
     `linear-gradient(180deg,${c1} 0%,${c2} 42%,${c3} 74%,${c4} 100%)`;
   document.querySelector(".etq-barra").style.background=
     `linear-gradient(90deg,${mood.barra[0]},${mood.barra[1]})`;
+  /* el fondo de la ficha y todas las barras toman el estado */
+  elEtiqueta.style.background=est.transparente?"transparent":papelMood();
+  $("etqTapa").style.background=papelMood();
+  $("etqTapa").style.opacity="0.82";
+  document.querySelectorAll("#etiqueta .metro").forEach(mEl=>{
+    mEl.style.background=`linear-gradient(180deg,${mood.barra[1]},${mood.barra[0]})`;
+  });
   $("etqFecha").textContent=fechaHoy();
   $("etqPie").innerHTML=`<span>sona · instrumento del lugar</span><span>${firmaLecturas()}</span>`;
   pintarPecera();
@@ -1753,8 +1765,10 @@ function pintarEtiqueta(ctx,W){
   ctx.clearRect(0,0,W,H);
   ctx.save();
   ctx.beginPath();ctx.roundRect(0,0,W,H,26*U);ctx.clip();
-  /* cuerpo crema */
-  ctx.fillStyle=est.fondo;ctx.fillRect(0,0,W,H);
+  /* cuerpo en el papel del estado */
+  const pmE=mezclaHex(est.fondo,moodLugar().cielo[3],0.5);
+  ctx.fillStyle=est.transparente?"rgba(0,0,0,0)":pmE;
+  if(!est.transparente)ctx.fillRect(0,0,W,H);
   /* cielo degradado (el aire de la pecera) */
   const SKY=310*U;
   const moodE=moodLugar();
@@ -1851,7 +1865,7 @@ function pintarEtiqueta(ctx,W){
     ctx.fillText(txt,x,y+30*U);
     /* metro vertical con marcador */
     const mx=x+colW-30*U, my=y-2*U, mh=44*U, mw=8*U;
-    const [cA,cB]=DIM_COL[dim];
+    const [cA,cB]=moodE.barra;
     const gm=ctx.createLinearGradient(0,my,0,my+mh);
     gm.addColorStop(0,cB);gm.addColorStop(1,cA);
     ctx.fillStyle=gm;
@@ -1887,7 +1901,7 @@ function pintarEtiqueta(ctx,W){
   /* tapa (lo que falta para 100) */
   ctx.save();
   ctx.beginPath();ctx.roundRect(40*U,yB,W-80*U,bh,13*U);ctx.clip();
-  ctx.fillStyle=est.fondo;ctx.globalAlpha=.82;
+  ctx.fillStyle=pmE;ctx.globalAlpha=.82;
   const wLleno=(W-80*U)*pct/100;
   ctx.fillRect(40*U+wLleno,yB,(W-80*U)-wLleno,bh);
   ctx.restore();
@@ -1922,10 +1936,10 @@ function svgEtiqueta(){
   <rect x="${mx}" y="${my}" width="8" height="44" rx="4" fill="url(#gd-${dim})"/>
   <rect x="${mx-3}" y="${ty-1.2}" width="14" height="2.5" rx="1.2" fill="${est.tinta}"/>`;
   }).join("\n  ");
-  const defsDim=DIMENSIONES.map(dim=>{
-    const [cA,cB]=DIM_COL[dim];
-    return `<linearGradient id="gd-${dim}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${cB}"/><stop offset="1" stop-color="${cA}"/></linearGradient>`;
-  }).join("");
+  const rampaM=moodLugar().barra;
+  const defsDim=DIMENSIONES.map(dim=>
+    `<linearGradient id="gd-${dim}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${rampaM[1]}"/><stop offset="1" stop-color="${rampaM[0]}"/></linearGradient>`
+  ).join("");
   const yD=SKY+168+4*64+6;
   const desc=est.descripcion.trim()
     ? est.descripcion.split(/\s+/).reduce((ac,w)=>{const u=ac[ac.length-1];if((u+" "+w).length<=58)ac[ac.length-1]=(u?u+" ":"")+w;else ac.push(w);return ac},[""]).slice(0,4)
@@ -1957,7 +1971,7 @@ function svgEtiqueta(){
     ${defsDim}
   </defs>
   <g clip-path="url(#marco)">
-    <rect width="${W}" height="${H}" fill="${est.fondo}"/>
+    <rect width="${W}" height="${H}" fill="${papelMood()}"/>
     <rect width="${W}" height="${SKY}" fill="url(#cielo)"/>
     <g clip-path="url(#pecera)">
       ${desenfoqueOrganismo()>0.2?`<filter id="ob" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="${desenfoqueOrganismo().toFixed(1)}"/></filter>`:""}
@@ -1987,7 +2001,7 @@ function svgEtiqueta(){
     <g>
       <clipPath id="cB"><rect x="40" y="${yB}" width="${W-80}" height="42" rx="13"/></clipPath>
       <rect x="40" y="${yB}" width="${W-80}" height="42" rx="13" fill="url(#barra)"/>
-      <rect x="${40+(W-80)*pct/100}" y="${yB}" width="${(W-80)*(100-pct)/100}" height="42" clip-path="url(#cB)" fill="${est.fondo}" opacity=".82"/>
+      <rect x="${40+(W-80)*pct/100}" y="${yB}" width="${(W-80)*(100-pct)/100}" height="42" clip-path="url(#cB)" fill="${papelMood()}" opacity=".82"/>
       <text x="54" y="${yB+28}" class="bnum">${pct}<tspan font-size="11" opacity=".5">%</tspan></text>
     </g>
     <text x="40" y="${H-22}" class="pie">SONA · INSTRUMENTO DEL LUGAR</text>
