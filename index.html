@@ -252,7 +252,6 @@ input[type=color]{
 }
 input[type=color]::-webkit-color-swatch-wrapper{padding:2px}
 input[type=color]::-webkit-color-swatch{border:none}
-#invertir{align-self:end;height:30px;width:34px;padding:0}
 
 /* exportar */
 .expgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -386,10 +385,8 @@ footer{
 
       <section>
         <h2>Color <span class="num">03</span></h2>
-        <div class="colores">
+        <div class="colores" style="grid-template-columns:1fr">
           <div class="colcaja"><span>Tinta</span><input type="color" id="colTinta" value="#3d4e60"></div>
-          <button class="b" id="invertir" title="Invertir">⇄</button>
-          <div class="colcaja"><span>Fondo</span><input type="color" id="colFondo" value="#f1f0ea"></div>
         </div>
         <div class="fila">
           <span class="etq">Fondo transparente</span>
@@ -1355,6 +1352,16 @@ function papelMood(){
   /* el papel de la ficha toma un tinte sutil del estado */
   return mezclaHex(est.fondo, moodLugar().cielo[3], 0.5);
 }
+function aplicarMoodFondo(){
+  /* el FONDO del escenario es el cielo del estado (ya no editable) */
+  const esc=document.getElementById("escenario");
+  if(!esc)return;
+  if(est.transparente){esc.style.background=""}
+  else{
+    const [c1,c2,c3,c4]=moodLugar().cielo;
+    esc.style.background=`linear-gradient(180deg,${c1} 0%,${c2} 42%,${c3} 74%,${c4} 100%)`;
+  }
+}
 const ETIQ={luz:"Luz",pausa:"Pausa",sonido:"Sonido",visual:"Visual",orientacion:"Orientación",flujo:"Flujo",materia:"Materia"};
 function aplicarLecturas(){
   fis.fusion=2+lect.visual*15;
@@ -1378,6 +1385,7 @@ function refrescarNiveles(){
       b.style.background=(i<n)?col:col+"2b";
     });
   });
+  if(typeof aplicarMoodFondo==="function")aplicarMoodFondo();
   if(typeof refrescarEtiqueta==="function" && est.vista==="etiqueta")refrescarEtiqueta();
 }
 (function construirDims(){
@@ -1603,23 +1611,16 @@ function aplicarColores(){
   document.documentElement.style.setProperty("--tinta-css",est.tinta);
   if(est.transparente){
     escenario.classList.add("transparente");
-    escenario.style.removeProperty("--fondo-css");
   }else{
     escenario.classList.remove("transparente");
-    escenario.style.setProperty("--fondo-css",est.fondo);
   }
+  if(typeof aplicarMoodFondo==="function")aplicarMoodFondo();
   $("gRet").setAttribute("stroke",est.tinta);
   const etq=$("etiqueta");
   if(etq){etq.style.color=est.tinta;etq.style.borderColor=est.tinta;
     etq.style.background=est.transparente?"transparent":est.fondo}
 }
 $("colTinta").addEventListener("input",e=>{est.tinta=e.target.value;aplicarColores()});
-$("colFondo").addEventListener("input",e=>{est.fondo=e.target.value;aplicarColores()});
-$("invertir").addEventListener("click",()=>{
-  const t=est.tinta;est.tinta=est.fondo;est.fondo=t;
-  $("colTinta").value=est.tinta;$("colFondo").value=est.fondo;
-  aplicarColores();
-});
 $("cTrans").addEventListener("change",e=>{est.transparente=e.target.checked;aplicarColores()});
 
 /* ---------- exportar ---------- */
