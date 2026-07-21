@@ -338,7 +338,11 @@ footer{
               <filter id="fSombra" x="-60%" y="-200%" width="220%" height="500%"><feGaussianBlur stdDeviation="7"/></filter>
             </defs>
             <g id="pecSombras" filter="url(#fSombra)"></g>
-            <g id="pecCuerpo"><path id="pecPuentes" fill="url(#gradPuente)"/><g id="pecOrbes"></g></g>
+            <g id="pecCuerpo">
+              <clipPath id="clipMasa"><path id="clipMasaPath"/></clipPath>
+              <path id="pecMasa" fill="url(#gradPuente)"/>
+              <g id="pecOrbes" clip-path="url(#clipMasa)"></g>
+            </g>
           </svg>
         </div>
         <div class="etq-cuerpo">
@@ -1469,51 +1473,84 @@ function circulosOrganismo(){
   out.sort((A,B)=>A[1]-B[1]);
   return out;
 }
-/* ---------- fusión morfológica: puentes metaball ----------
-   Nodos de fusión implícitos en cada circunferencia: cuando dos
-   círculos entran al umbral, nace un puente con continuidad de
-   curvatura (anclas SOBRE los círculos, asas tangentes) y cintura
-   de tensión superficial. La fuerza depende de la proximidad:
-   los puentes aparecen, engordan y se disuelven gradualmente.
-   Círculos + puentes en un solo relleno = cuerpo coherente. */
-function puenteMetaball(x1,y1,r1,x2,y2,r2){
-  const v=0.55, asa=2.3;
-  const maxD=(r1+r2)*1.4;
-  const d=Math.hypot(x2-x1,y2-y1);
-  if(d<=0.1||d>maxD||d<=Math.abs(r1-r2)*1.02)return null;
-  let u1=0,u2=0;
-  if(d<r1+r2){
-    u1=Math.acos((r1*r1+d*d-r2*r2)/(2*r1*d));
-    u2=Math.acos((r2*r2+d*d-r1*r1)/(2*r2*d));
+/* ---------- fusión morfológica: UNIÓN implícita ----------
+   Los círculos no se conectan: se MEZCLAN en una forma nueva.
+   Campo metaball f(p)=Σ r²/d² con iso=1 — donde dos cuerpos se
+   acercan, el contorno único se funde con redistribución de
+   volumen (cinturas y bulbos que ningún círculo tenía solo),
+   continuidad suave y tensión superficial. El contorno se extrae
+   por marching squares cada frame y se suaviza con Catmull-Rom. */
+function contornoMetaball(lista){
+  const RES=4;
+  let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9;
+  for(const [x,y,r] of lista){
+    minX=Math.min(minX,x-r*2.3);maxX=Math.max(maxX,x+r*2.3);
+    minY=Math.min(minY,y-r*2.3);maxY=Math.max(maxY,y+r*2.3);
   }
-  const ang=Math.atan2(y2-y1,x2-x1);
-  const maxAb=Math.acos(Math.max(-1,Math.min(1,(r1-r2)/d)));
-  const a1=ang+u1+(maxAb-u1)*v;
-  const a2=ang-u1-(maxAb-u1)*v;
-  const a3=ang+Math.PI-u2-(Math.PI-u2-maxAb)*v;
-  const a4=ang-Math.PI+u2+(Math.PI-u2-maxAb)*v;
-  const pt=(x,y,a,r)=>[x+r*Math.cos(a), y+r*Math.sin(a)];
-  const p1=pt(x1,y1,a1,r1), p2=pt(x1,y1,a2,r1);
-  const p3=pt(x2,y2,a3,r2), p4=pt(x2,y2,a4,r2);
-  const fuerza=Math.max(0,Math.min(1,(maxD-d)/(maxD-(r1+r2)*0.8)));
-  const dist13=Math.hypot(p1[0]-p3[0],p1[1]-p3[1]);
-  const lado=Math.min(v*asa, dist13/(r1+r2)*asa)*Math.min(1,d*2/(r1+r2))*(0.55+0.45*fuerza);
-  const d1=r1*lado, d2=r2*lado;
-  const h1=pt(p1[0],p1[1],a1-Math.PI/2,d1);
-  const h2=pt(p2[0],p2[1],a2+Math.PI/2,d1);
-  const h3=pt(p3[0],p3[1],a3+Math.PI/2,d2);
-  const h4=pt(p4[0],p4[1],a4-Math.PI/2,d2);
-  const F=n=>n.toFixed(1);
-  return `M ${F(p1[0])} ${F(p1[1])} C ${F(h1[0])} ${F(h1[1])} ${F(h3[0])} ${F(h3[1])} ${F(p3[0])} ${F(p3[1])} L ${F(p4[0])} ${F(p4[1])} C ${F(h4[0])} ${F(h4[1])} ${F(h2[0])} ${F(h2[1])} ${F(p2[0])} ${F(p2[1])} Z`;
-}
-function puentesOrganismo(lista){
-  const l=lista||circulosOrganismo();
-  let d="";
-  for(let i=0;i<l.length;i++)
-    for(let j=i+1;j<l.length;j++){
-      const b=puenteMetaball(l[i][0],l[i][1],l[i][2],l[j][0],l[j][1],l[j][2]);
-      if(b)d+=b+" ";
+  minX=Math.max(minX,2);maxX=Math.min(maxX,698);
+  minY=Math.max(minY,54);maxY=Math.min(maxY,308);
+  const nx=Math.ceil((maxX-minX)/RES)+1, ny=Math.ceil((maxY-minY)/RES)+1;
+  const F=new Float32Array(nx*ny);
+  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){
+    const x=minX+i*RES, y=minY+j*RES;
+    let f=0;
+    for(const [cx,cy,r] of lista){
+      const dx=x-cx,dy=y-cy;
+      f+=r*r/(dx*dx+dy*dy+1e-6);
     }
+    F[j*nx+i]=1-f;            // negativo = adentro (iso f=1)
+  }
+  const P=pt=>pt[0].toFixed(1)+","+pt[1].toFixed(1);
+  const lerp=(xa,ya,fa,xb,yb,fb)=>{const t=fa/(fa-fb);return [xa+(xb-xa)*t, ya+(yb-ya)*t]};
+  const aristas=[];
+  for(let j=0;j<ny-1;j++)for(let i=0;i<nx-1;i++){
+    const x=minX+i*RES, y=minY+j*RES;
+    const f00=F[j*nx+i],f10=F[j*nx+i+1],f01=F[(j+1)*nx+i],f11=F[(j+1)*nx+i+1];
+    let ci=0;
+    if(f00<0)ci|=1; if(f10<0)ci|=2; if(f11<0)ci|=4; if(f01<0)ci|=8;
+    if(ci===0||ci===15)continue;
+    const T=(f00<0)!==(f10<0)?lerp(x,y,f00,x+RES,y,f10):null;
+    const R2=(f10<0)!==(f11<0)?lerp(x+RES,y,f10,x+RES,y+RES,f11):null;
+    const B=(f01<0)!==(f11<0)?lerp(x,y+RES,f01,x+RES,y+RES,f11):null;
+    const L=(f00<0)!==(f01<0)?lerp(x,y,f00,x,y+RES,f01):null;
+    let lista2;
+    if(ci===5||ci===10){
+      lista2=ci===5?[[L,T],[R2,B]]:[[T,R2],[B,L]];
+    }else{
+      lista2={1:[[L,T]],2:[[T,R2]],3:[[L,R2]],4:[[R2,B]],6:[[T,B]],7:[[L,B]],
+              8:[[B,L]],9:[[B,T]],11:[[B,R2]],12:[[R2,L]],13:[[R2,T]],14:[[T,L]]}[ci];
+    }
+    for(const par of lista2)if(par[0]&&par[1])aristas.push(par);
+  }
+  const ady=new Map();
+  const add=(k,seg)=>{let a=ady.get(k);if(!a){a=[];ady.set(k,a)}a.push(seg)};
+  for(const seg of aristas){add(P(seg[0]),seg);add(P(seg[1]),seg)}
+  const usados=new Set();
+  let d="";
+  for(const seg of aristas){
+    if(usados.has(seg))continue;
+    usados.add(seg);
+    const lazo=[seg[0],seg[1]];
+    let cur=seg[1];
+    for(let gu=0;gu<20000;gu++){
+      const cands=(ady.get(P(cur))||[]).filter(s2=>!usados.has(s2));
+      if(!cands.length)break;
+      const s2=cands[0];usados.add(s2);
+      const nxt=P(s2[0])===P(cur)?s2[1]:s2[0];
+      if(P(nxt)===P(lazo[0]))break;
+      lazo.push(nxt);cur=nxt;
+    }
+    if(lazo.length<8)continue;
+    const N=lazo.length;
+    d+="M "+lazo[0][0].toFixed(1)+" "+lazo[0][1].toFixed(1);
+    for(let k=0;k<N;k++){
+      const p0=lazo[(k-1+N)%N],p1=lazo[k],p2=lazo[(k+1)%N],p3=lazo[(k+2)%N];
+      d+=" C "+(p1[0]+(p2[0]-p0[0])/6).toFixed(1)+" "+(p1[1]+(p2[1]-p0[1])/6).toFixed(1)
+        +" "+(p2[0]-(p3[0]-p1[0])/6).toFixed(1)+" "+(p2[1]-(p3[1]-p1[1])/6).toFixed(1)
+        +" "+p2[0].toFixed(1)+" "+p2[1].toFixed(1);
+    }
+    d+=" Z ";
+  }
   return d.trim();
 }
 function densidadTinta(){ return paramsOrganismo().dens }
@@ -1574,9 +1611,12 @@ function pintarPecera(){
   $("gOrbe1").setAttribute("stop-color",col.claro);
   $("gOrbe1b").setAttribute("stop-color",col.claro);
   $("gOrbe2").setAttribute("stop-color",col.profundo);
-  /* puentes de fusión con la misma luz cenital (claro arriba) */
-  $("pecPuentes").setAttribute("d",puentesOrganismo(lista));
-  $("gPu1").setAttribute("stop-color",mezclaHex(col.claro,col.profundo,0.35));
+  /* la masa: unión implícita — una forma nueva; los orbes quedan
+     como brillos perlados recortados DENTRO de la masa */
+  const dMasa=contornoMetaball(lista);
+  $("pecMasa").setAttribute("d",dMasa);
+  $("clipMasaPath").setAttribute("d",dMasa);
+  $("gPu1").setAttribute("stop-color",mezclaHex(col.claro,col.profundo,0.30));
   $("gPu2").setAttribute("stop-color",col.profundo);
   const cuerpo=$("pecCuerpo");
   cuerpo.setAttribute("fill-opacity",densidadTinta().toFixed(2));
@@ -1851,26 +1891,27 @@ function pintarEtiqueta(ctx,W){
   const colE=coloresOrbe();
   const blE=desenfoqueOrganismo();
   if(blE>0.2)ctx.filter=`blur(${(blE*U).toFixed(1)}px)`;
-  /* puentes de fusión (misma luz vertical) */
-  {
-    const listaE=circulosOrganismo();
-    const dPu=puentesOrganismo(listaE);
-    if(dPu){
-      const gPu=ctx.createLinearGradient(0,70*U,0,300*U);
-      gPu.addColorStop(0,mezclaHex(colE.claro,colE.profundo,0.35));
-      gPu.addColorStop(1,colE.profundo);
-      ctx.fillStyle=gPu;
-      ctx.setTransform(U,0,0,U,0,0);
-      ctx.fill(new Path2D(dPu),"nonzero");
-      ctx.setTransform(1,0,0,1,0,0);
-    }
-  }
-  for(const [ox,oy,or] of circulosOrganismo()){
+  /* la masa unificada + brillos recortados adentro */
+  const listaE=circulosOrganismo();
+  const dMasaE=contornoMetaball(listaE);
+  const gMa=ctx.createLinearGradient(0,70*U,0,300*U);
+  gMa.addColorStop(0,mezclaHex(colE.claro,colE.profundo,0.30));
+  gMa.addColorStop(1,colE.profundo);
+  ctx.fillStyle=gMa;
+  ctx.setTransform(U,0,0,U,0,0);
+  const pMasa=new Path2D(dMasaE);
+  ctx.fill(pMasa,"nonzero");
+  ctx.save();
+  ctx.clip(pMasa,"nonzero");
+  ctx.setTransform(1,0,0,1,0,0);
+  for(const [ox,oy,or] of listaE){
     const gO=ctx.createRadialGradient(ox*U,(oy-or*0.72)*U,or*0.05*U, ox*U,(oy-or*0.72)*U,or*1.84*U);
     gO.addColorStop(0,colE.claro);gO.addColorStop(0.24,colE.claro);gO.addColorStop(1,colE.profundo);
     ctx.fillStyle=gO;
     ctx.beginPath();ctx.arc(ox*U,oy*U,or*U,0,7);ctx.fill();
   }
+  ctx.restore();
+  ctx.setTransform(1,0,0,1,0,0);
   ctx.filter="none";
   /* granulado del cielo (determinista) — como el overlay del vivo */
   ctx.globalAlpha=0.16;
@@ -2046,9 +2087,10 @@ function svgEtiqueta(){
       ${(()=>{const l=circulosOrganismo();const ys=l.map(c=>c[1]);const yMin=Math.min(...ys),yMax=Math.max(...ys);
         return '<g filter="url(#fSomEx)">'+l.map(([x,y,r])=>{const d01=(y-yMin)/((yMax-yMin)||1);const rx=r*(0.9+0.5*d01);
           return `<ellipse cx="${x.toFixed(1)}" cy="274" rx="${rx.toFixed(1)}" ry="${(rx*0.16).toFixed(1)}" fill="url(#gSomEx)" opacity="${(0.05+0.05*d01).toFixed(2)}"/>`;}).join("")+'</g>';})()}
+      <clipPath id="clipMx"><path d="${contornoMetaball(circulosOrganismo())}"/></clipPath>
       <g fill-opacity="${densidadTinta().toFixed(2)}"${desenfoqueOrganismo()>0.2?' filter="url(#ob)"':''}>
-        <path d="${puentesOrganismo()}" fill="url(#gPuEx)"/>
-        <g fill="url(#gOrbEx)">
+        <path d="${contornoMetaball(circulosOrganismo())}" fill="url(#gPuEx)"/>
+        <g fill="url(#gOrbEx)" clip-path="url(#clipMx)">
         ${circulosOrganismo().map(([x,y,r])=>`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}"/>`).join("")}
         </g>
       </g>
