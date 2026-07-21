@@ -1437,6 +1437,7 @@ function paramsOrganismo(){
     blur:(1-lect.visual)*13,                 // visual: desenfoque
     cong: lect.orientacion,                  // orientación: sentido del giro
     pul: rm?0:lect.sonido*0.16,              // sonido: pulsación
+    son: lect.sonido,                        // sonido crudo (capa radial)
     dens: 0.28+lect.materia*0.72,            // materia: densidad
     t: rm?0:2*Math.PI*reloj.r/LOOP_ORG,
   };
@@ -1464,10 +1465,19 @@ function circulosOrganismo(){
      comprimido, el carrusel con profundidad */
   const Ro=P.n===1?0:P.r/Math.sin(Math.PI/P.n);
   const espacio=0.09+0.91*P.sep;
+  /* CAPA RADIAL (aditiva — no sustituye nada): la distancia al centro
+     respira. Cada círculo se expande hacia afuera o se recoge hacia
+     adentro sobre su radio orbital, gobernado por los mismos valores:
+     sonido = amplitud del aliento; orientación = congruencia (plena =
+     todos respiran en sincronía y la formación entera se hincha y se
+     recoge; baja = cada uno con su propio desfase, unos salen mientras
+     otros entran). Armónico entero (2 ciclos/loop) → loop exacto. */
+  const ampR=P.rm?0:0.05+0.13*P.son;
   const out=[];
   for(let i=0;i<P.n;i++){
     const a=fase + espacio*2*Math.PI*i/P.n;
-    out.push([cx+Ro*Math.cos(a), cy+Ro*0.32*Math.sin(a), R]);
+    const radial=1+ampR*Math.sin(2*P.t+(1-P.cong)*i*2.1);
+    out.push([cx+Ro*radial*Math.cos(a), cy+Ro*0.32*radial*Math.sin(a), R]);
   }
   /* orden de pintor: los del fondo del plano se dibujan detrás */
   out.sort((A,B)=>A[1]-B[1]);
