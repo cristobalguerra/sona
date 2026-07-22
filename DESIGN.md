@@ -95,7 +95,7 @@ Biblioteca de 28 variantes dibujadas a mano por el usuario: 4 letras × 6 conexi
 
 - **Anatomía**: cuerpo 149 u de alto; pestañas *arriba* = brazo con nodo (asciende hasta 37 u), *media* = protuberancia/muesca horizontales que se ANIDAN entre sí (nido 26 u), *abajo* = nodo descendente. Normales a escala 0.788 para casar el cuerpo.
 - **Soldaduras**: der×izq a la misma altura → arriba/abajo comparten el nodo (centros coincidentes, una sola perla); media anida protuberancia en muesca. Sin pareja → la pestaña queda como gesto suelto o la letra descansa en su normal.
-- **Partitura**: 8 compases deterministas (loop exacto 4.8 s, `SCORE_BIB`): la conexión viaja s∪o → o∪n (3 alturas) → n∪a, con dos compases dobles. Transición: crossfade 0.23 s + deslizamiento smoothstep; cada compás se centra (la palabra respira 700→777 u). `prefers-reduced-motion` congela el compás 1.
+- **Partitura**: 8 compases deterministas (loop exacto 4.8 s, `SCORE_BIB`): la conexión viaja s∪o → o∪n (3 alturas) → n∪a, con dos compases dobles. **Retícula FIJA** (2026-07-22, "todo en el mismo espacio, la delimitación siempre la misma"): ranura de cuerpo 149.7 + delimitación constante 36; los cuerpos se anclan por su canto izquierdo modal (~149 u uniforme en las 28 variantes) y JAMÁS se mueven — solo las pestañas cambian, alcanzando a la vecina a través del espacio constante. Transición: crossfade 0.23 s en sitio, sin deslizamiento. `prefers-reduced-motion` congela el compás 1.
 - **Fuente**: SVGs en `/variantes` (Recursos 1–24 conexiones, 25=S 26=N 27=A 28=O normales), paths inline en `BIBLIO_PATHS`/`BIBLIO_META` (self-contained). Exports SVG/PNG/Copiar del compás vigente.
 
 ## Reglas de contraste
