@@ -343,6 +343,22 @@ footer{
                 <stop id="gPu1" offset="0"/>
                 <stop id="gPu2" offset="1"/>
               </linearGradient>
+              <filter id="fVidrio" x="-20%" y="-30%" width="140%" height="170%">
+                <feOffset in="SourceAlpha" dy="5" result="dAbajo"/>
+                <feComposite in="SourceAlpha" in2="dAbajo" operator="out" result="crestaLuz"/>
+                <feGaussianBlur in="crestaLuz" stdDeviation="2.2" result="crestaLuzB"/>
+                <feFlood id="fvLuz" flood-color="#ffffff" flood-opacity="0.85"/>
+                <feComposite in2="crestaLuzB" operator="in" result="luz"/>
+                <feOffset in="SourceAlpha" dy="-5" result="dArriba"/>
+                <feComposite in="SourceAlpha" in2="dArriba" operator="out" result="crestaSom"/>
+                <feGaussianBlur in="crestaSom" stdDeviation="2.6" result="crestaSomB"/>
+                <feFlood id="fvSom" flood-color="#596f63" flood-opacity="0.55"/>
+                <feComposite in2="crestaSomB" operator="in" result="som"/>
+                <feFlood id="fvCuerpo" flood-color="#e4ece6" flood-opacity="0.12"/>
+                <feComposite in2="SourceAlpha" operator="in" result="cuerpo"/>
+                <feMerge><feMergeNode in="cuerpo"/><feMergeNode in="som"/><feMergeNode in="luz"/></feMerge>
+              </filter>
+              <filter id="fSomPal" x="-30%" y="-40%" width="160%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
               <radialGradient id="gradSombra">
                 <stop offset="0" stop-color="#1f2c39" stop-opacity=".28"/>
                 <stop offset=".55" stop-color="#1f2c39" stop-opacity=".12"/>
@@ -350,7 +366,8 @@ footer{
               </radialGradient>
               <filter id="fSombra" x="-60%" y="-200%" width="220%" height="500%"><feGaussianBlur stdDeviation="7"/></filter>
             </defs>
-            <g id="pecPalabra" fill="url(#gradPuente)"></g>
+            <g id="pecPalabraSombra" transform="translate(0 13)" filter="url(#fSomPal)" opacity="0.32" fill="#596f63"></g>
+            <g id="pecPalabra" filter="url(#fVidrio)"></g>
           </svg>
         </div>
         <div class="etq-cuerpo">
@@ -1592,18 +1609,24 @@ function coloresOrbe(){
 }
 let orbeEls=[], sombraEls=[];
 function pintarPecera(){
-  /* el cielo de la etiqueta muestra la PALABRA viva de la
-     tipografía (los círculos fueron retirados); el color sigue
-     siendo del ESTADO: gradiente de luz cenital claro→profundo */
+  /* la palabra como VIDRIO LÍQUIDO: sin relleno — la silueta se lee
+     por la cresta de luz del borde superior, la cresta de sombra del
+     inferior, un cuerpo casi transparente y la sombra proyectada.
+     Los colores siguen siendo del ESTADO. */
   const g=$("pecPalabra");if(!g)return;
   const col=coloresOrbe();
-  $("gPu1").setAttribute("stop-color",mezclaHex(col.claro,col.profundo,0.30));
-  $("gPu2").setAttribute("stop-color",col.profundo);
+  $("fvLuz").setAttribute("flood-color",mezclaHex(col.claro,"#ffffff",0.75));
+  $("fvSom").setAttribute("flood-color",col.profundo);
+  $("fvCuerpo").setAttribute("flood-color",col.claro);
+  const gs=$("pecPalabraSombra");
+  gs.setAttribute("fill",col.profundo);
   const p=palabraEnCielo();
   const firma=p?`${estadoBiblio().k}|${est.tipo.texto}|${est.tipo.delim}`:"vacia";
   if(g.dataset.firma===firma)return;
   g.dataset.firma=firma;
-  g.innerHTML=p?p.ids.map((id,i)=>id?`<path transform="translate(${(p.ox+p.xs[i]*p.esc).toFixed(1)} ${p.oy.toFixed(1)}) scale(${p.esc.toFixed(4)})" d="${BIB_PATHS[id]}"/>`:"").join(""):"";
+  const html=p?p.ids.map((id,i)=>id?`<path transform="translate(${(p.ox+p.xs[i]*p.esc).toFixed(1)} ${p.oy.toFixed(1)}) scale(${p.esc.toFixed(4)})" d="${BIB_PATHS[id]}"/>`:"").join(""):"";
+  g.innerHTML=html;
+  gs.innerHTML=html;
 }
 
 /* ---------- etiqueta: ficha de análisis ---------- */
@@ -2025,21 +2048,44 @@ function pintarEtiqueta(ctx,W){
   /* el organismo del lugar */
   ctx.save();
   ctx.beginPath();ctx.rect(0,0,W,SKY);ctx.clip();
-  /* la palabra del lugar (tipografía viva) con la luz del estado */
+  /* la palabra como vidrio líquido (paridad con el filtro del vivo) */
   const colE=coloresOrbe();
   {
     const p=palabraEnCielo();
     if(p){
-      const gMa=ctx.createLinearGradient(0,70*U,0,300*U);
-      gMa.addColorStop(0,mezclaHex(colE.claro,colE.profundo,0.30));
-      gMa.addColorStop(1,colE.profundo);
-      ctx.fillStyle=gMa;
+      const mk=document.createElement("canvas");mk.width=W;mk.height=Math.round(SKY);
+      const mx=mk.getContext("2d");
+      mx.fillStyle="#000";
       p.ids.forEach((id,i)=>{
         if(!id)return;
-        ctx.setTransform(p.esc*U,0,0,p.esc*U,(p.ox+p.xs[i]*p.esc)*U,p.oy*U);
-        ctx.fill(new Path2D(BIB_PATHS[id]));
+        mx.setTransform(p.esc*U,0,0,p.esc*U,(p.ox+p.xs[i]*p.esc)*U,p.oy*U);
+        mx.fill(new Path2D(BIB_PATHS[id]));
       });
-      ctx.setTransform(1,0,0,1,0,0);
+      mx.setTransform(1,0,0,1,0,0);
+      const tinta=(masc,color)=>{
+        const c2=document.createElement("canvas");c2.width=masc.width;c2.height=masc.height;
+        const x2=c2.getContext("2d");
+        x2.drawImage(masc,0,0);
+        x2.globalCompositeOperation="source-in";
+        x2.fillStyle=color;x2.fillRect(0,0,c2.width,c2.height);
+        return c2;
+      };
+      const cresta=(masc,dy)=>{
+        const c2=document.createElement("canvas");c2.width=masc.width;c2.height=masc.height;
+        const x2=c2.getContext("2d");
+        x2.drawImage(masc,0,0);
+        x2.globalCompositeOperation="destination-out";
+        x2.drawImage(masc,0,dy);
+        return c2;
+      };
+      ctx.save();ctx.globalAlpha=0.32;ctx.filter=`blur(${(6*U).toFixed(1)}px)`;
+      ctx.drawImage(tinta(mk,colE.profundo),0,13*U);ctx.restore();
+      ctx.save();ctx.globalAlpha=0.12;ctx.drawImage(tinta(mk,colE.claro),0,0);ctx.restore();
+      ctx.save();ctx.globalAlpha=0.55;ctx.filter=`blur(${(2.6*U).toFixed(1)}px)`;
+      ctx.drawImage(tinta(cresta(mk,-5*U),colE.profundo),0,0);ctx.restore();
+      ctx.save();ctx.globalAlpha=0.85;ctx.filter=`blur(${(2.2*U).toFixed(1)}px)`;
+      ctx.drawImage(tinta(cresta(mk,5*U),mezclaHex(colE.claro,"#ffffff",0.75)),0,0);ctx.restore();
+      ctx.filter="none";
     }
   }
   /* granulado del cielo (determinista) — como el overlay del vivo */
@@ -2210,11 +2256,28 @@ function svgEtiqueta(){
       ${desenfoqueOrganismo()>0.2?`<filter id="ob" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="${desenfoqueOrganismo().toFixed(1)}"/></filter>`:""}
       <radialGradient id="gOrbEx" cx="50%" cy="14%" r="92%"><stop offset="0" stop-color="${coloresOrbe().claro}"/><stop offset="0.24" stop-color="${coloresOrbe().claro}"/><stop offset="1" stop-color="${coloresOrbe().profundo}"/></radialGradient>
       <linearGradient id="gPuEx" gradientUnits="userSpaceOnUse" x1="0" y1="70" x2="0" y2="300"><stop offset="0" stop-color="${mezclaHex(coloresOrbe().claro,coloresOrbe().profundo,0.35)}"/><stop offset="1" stop-color="${coloresOrbe().profundo}"/></linearGradient>
+      <filter id="fVidrioEx" x="-20%" y="-30%" width="140%" height="170%">
+        <feOffset in="SourceAlpha" dy="5" result="dAbajo"/>
+        <feComposite in="SourceAlpha" in2="dAbajo" operator="out" result="crestaLuz"/>
+        <feGaussianBlur in="crestaLuz" stdDeviation="2.2" result="crestaLuzB"/>
+        <feFlood flood-color="${mezclaHex(coloresOrbe().claro,"#ffffff",0.75)}" flood-opacity="0.85"/>
+        <feComposite in2="crestaLuzB" operator="in" result="luz"/>
+        <feOffset in="SourceAlpha" dy="-5" result="dArriba"/>
+        <feComposite in="SourceAlpha" in2="dArriba" operator="out" result="crestaSom"/>
+        <feGaussianBlur in="crestaSom" stdDeviation="2.6" result="crestaSomB"/>
+        <feFlood flood-color="${coloresOrbe().profundo}" flood-opacity="0.55"/>
+        <feComposite in2="crestaSomB" operator="in" result="som"/>
+        <feFlood flood-color="${coloresOrbe().claro}" flood-opacity="0.12"/>
+        <feComposite in2="SourceAlpha" operator="in" result="cuerpo"/>
+        <feMerge><feMergeNode in="cuerpo"/><feMergeNode in="som"/><feMergeNode in="luz"/></feMerge>
+      </filter>
+      <filter id="fSomPalEx" x="-30%" y="-40%" width="160%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
       <radialGradient id="gSomEx"><stop offset="0" stop-color="#1f2c39" stop-opacity=".28"/><stop offset=".55" stop-color="#1f2c39" stop-opacity=".12"/><stop offset="1" stop-color="#1f2c39" stop-opacity="0"/></radialGradient>
       <filter id="fSomEx" x="-60%" y="-200%" width="220%" height="500%"><feGaussianBlur stdDeviation="7"/></filter>
       <filter id="gnEx"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.5 0"/></filter>
       ${(()=>{const p=palabraEnCielo();if(!p)return"";
-        return '<g fill="url(#gPuEx)">'+p.ids.map((id,i)=>id?`<path transform="translate(${(p.ox+p.xs[i]*p.esc).toFixed(1)} ${p.oy.toFixed(1)}) scale(${p.esc.toFixed(4)})" d="${BIB_PATHS[id]}"/>`:"").join("")+'</g>';})()}
+        const letras=p.ids.map((id,i)=>id?`<path transform="translate(${(p.ox+p.xs[i]*p.esc).toFixed(1)} ${p.oy.toFixed(1)}) scale(${p.esc.toFixed(4)})" d="${BIB_PATHS[id]}"/>`:"").join("");
+        return `<g transform="translate(0 13)" filter="url(#fSomPalEx)" opacity="0.32" fill="${coloresOrbe().profundo}">${letras}</g><g filter="url(#fVidrioEx)">${letras}</g>`;})()}
       <rect width="${W}" height="${SKY}" filter="url(#gnEx)" opacity=".35" style="mix-blend-mode:overlay"/>
     </g>
     <text x="40" y="${SKY+38}" class="cab">ANÁLISIS DEL LUGAR</text>
