@@ -89,6 +89,15 @@ Sistema tipográfico paramétrico: **cada letra es datos, no trazos**. Lienzo 20
 - **Salidas**: SVG prioridad (rects rx + path de puentes, viewBox con margen 50) · Canvas/PNG (roundRect + Path2D) · Copiar SVG. Video no aplica (estático).
 - **Criterio de éxito cumplido**: palabras legibles Y gráficos abstractos con los mismos parámetros (tracking −50 + maxD 160 teje la palabra en una masa líquida).
 
+### Modo Biblioteca (2026-07-22 — segundo intento, test "sona")
+
+Biblioteca de 28 variantes dibujadas a mano por el usuario: 4 letras × 6 conexiones ({izq,der} × {arriba,media,abajo}) + 4 normales sin efecto. El sistema TIENE la biblioteca y JUEGA la decisión de qué versión usar para dar movimiento a la palabra:
+
+- **Anatomía**: cuerpo 149 u de alto; pestañas *arriba* = brazo con nodo (asciende hasta 37 u), *media* = protuberancia/muesca horizontales que se ANIDAN entre sí (nido 26 u), *abajo* = nodo descendente. Normales a escala 0.788 para casar el cuerpo.
+- **Soldaduras**: der×izq a la misma altura → arriba/abajo comparten el nodo (centros coincidentes, una sola perla); media anida protuberancia en muesca. Sin pareja → la pestaña queda como gesto suelto o la letra descansa en su normal.
+- **Partitura**: 8 compases deterministas (loop exacto 4.8 s, `SCORE_BIB`): la conexión viaja s∪o → o∪n (3 alturas) → n∪a, con dos compases dobles. Transición: crossfade 0.23 s + deslizamiento smoothstep; cada compás se centra (la palabra respira 700→777 u). `prefers-reduced-motion` congela el compás 1.
+- **Fuente**: SVGs en `/variantes` (Recursos 1–24 conexiones, 25=S 26=N 27=A 28=O normales), paths inline en `BIBLIO_PATHS`/`BIBLIO_META` (self-contained). Exports SVG/PNG/Copiar del compás vigente.
+
 ## Reglas de contraste
 
 Texto sobre papel: tinta plena o tinta ≥.72 alfa (AA). Los metros nunca llevan texto encima; la cifra de la barra va en tinta sobre el extremo niebla. El logo siempre en tinta sobre cielo (contraste sobrado).
