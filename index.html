@@ -407,6 +407,7 @@ footer{
       <section>
         <h2>Tipografía · biblioteca <span class="num">03</span></h2>
         <input type="text" id="tipoTexto" maxlength="24" autocomplete="off" spellcheck="false" placeholder="escribe con s · o · n · a">
+        <div class="tipoCtl"><span class="etq">Espacio <b id="tipoDelimV">20</b>px</span><input type="range" id="tipoDelim" min="-40" max="120" step="2" value="20"></div>
         <div class="fila" style="margin-top:10px;gap:8px">
           <span class="etq">Tinta</span><input type="color" id="tipoTinta" value="#3d4e60">
           <span class="etq">Fondo</span><input type="color" id="tipoFondo" value="#f1f0ea">
@@ -1746,7 +1747,7 @@ $("cTrans").addEventListener("change",e=>{est.transparente=e.target.checked;apli
    8 compases decide qué costuras fluyen (pares, todas, impares,
    primera, última, ninguna). El usuario escribe el texto; la
    partitura se generaliza a cualquier palabra. Loop exacto 4.8 s. */
-est.tipo={texto:"sona",tinta:"#3d4e60",fondo:"#f1f0ea"};
+est.tipo={texto:"sona",delim:20,tinta:"#3d4e60",fondo:"#f1f0ea"};
 const BIB_PATHS={
   5:"M175,50c13.75,0,25-11.25,25-25h0c0-13.75-11.25-25-25-25H25C11.25,0,0,11.25,0,25h0v50h0c0,13.75,11.25,25,25,25h25c13.75,0,25,11.25,25,25h0c0,13.75-11.25,25-25,25h-25c-13.75,0-25,11.25-25,25h0c0,13.75,11.25,25,25,25h150c13.75,0,25-11.25,25-25h0v-50h0c0-13.75-11.25-25-25-25h-50c-13.75,0-25-11.25-25-25h0c0-13.75,11.25-25,25-25h50Z",
   6:"M185.46,0H62.5c-6.88,0-12.5,8.31-12.5,18.47s-11.25,18.47-25,18.47h0C11.25,36.94,0,48.19,0,61.94v113.06c0,13.75,11.25,25,25,25h37.5c6.88,0,12.5-11.25,12.5-25v-50c0-13.75,10.33-25,22.96-25s22.96,11.25,22.96,25v50c0,13.75,6.54,25,14.54,25h50c8,0,14.54-11.25,14.54-25V25c0-13.75-6.54-25-14.54-25ZM97.96,87.5c-12.63,0-22.96-11.25-22.96-25v-12.5c0-13.75,10.33-25,22.96-25s22.96,11.25,22.96,25v12.5c0,13.75-10.33,25-22.96,25Z",
@@ -1771,7 +1772,7 @@ const BIB_ROLES={
   N:{normal:7, izq:19,der:15,ambas:11},
   O:{normal:16,izq:8, der:20,ambas:12},
 };
-const CAJA_BIB=200, DELIM_BIB=-2, ESPACIO_BIB=120, MARGEN_BIB=48;
+const CAJA_BIB=200, ESPACIO_BIB=120, MARGEN_BIB=48;
 const LOOP_BIB=4.8, NBEATS_BIB=8, DURB_BIB=LOOP_BIB/NBEATS_BIB;
 const MODOS_BIB=["abierto","pares","todas","impares","primera","todas","ultima","abierto"];
 function palabraBiblio(){
@@ -1786,7 +1787,7 @@ function palabraBiblio(){
 }
 function xsBiblio(pal){
   const xs=[];let x=0;
-  for(const it of pal){xs.push(x);x+=it===null?ESPACIO_BIB:(CAJA_BIB+DELIM_BIB)}
+  for(const it of pal){xs.push(x);x+=it===null?ESPACIO_BIB:(CAJA_BIB+est.tipo.delim)}
   const w=pal.length?xs[pal.length-1]+CAJA_BIB:CAJA_BIB;
   return {xs,w};
 }
@@ -1840,29 +1841,22 @@ function refrescarBiblio(){
   animarBiblio(true);
 }
 function animarBiblio(forzar){
+  /* SIN fundido: el cambio de versión es un corte seco al entrar
+     cada compás (petición del usuario) */
   if(est.vista!=="tipo"||!_bibDom)return;
   if(_bibDom.nPal!==palabraBiblio().length){refrescarBiblio();return}
-  const {k,e}=estadoBiblio();
-  const kAnt=(k+NBEATS_BIB-1)%NBEATS_BIB;
-  const cur=idsBiblio(k), ant=idsBiblio(kAnt);
+  const {k}=estadoBiblio();
+  if(_bibDom.ultimo===k&&!forzar)return;
+  const cur=idsBiblio(k);
   const {xs}=xsBiblio(palabraBiblio());
-  if(_bibDom.ultimo!==k||forzar){
-    _bibDom.letras.forEach((g,i)=>{
-      const [pAnt,pCur]=g.children;
-      pAnt.setAttribute("d",ant[i]?BIB_PATHS[ant[i]]:"");
-      pCur.setAttribute("d",cur[i]?BIB_PATHS[cur[i]]:"");
-    });
-    _bibDom.ultimo=k;
-  }
   _bibDom.letras.forEach((g,i)=>{
     const [pAnt,pCur]=g.children;
-    const cambia=ant[i]!==cur[i];
-    pAnt.style.opacity=cambia?String(1-e):"0";
-    pCur.style.opacity=cambia?String(e):"1";
-    const tr=`translate(${xs[i]} 0)`;
-    pAnt.setAttribute("transform",tr);
-    pCur.setAttribute("transform",tr);
+    pAnt.style.opacity="0";
+    pCur.style.opacity="1";
+    pCur.setAttribute("d",cur[i]?BIB_PATHS[cur[i]]:"");
+    pCur.setAttribute("transform",`translate(${xs[i]} 0)`);
   });
+  _bibDom.ultimo=k;
 }
 function svgTipoBiblio(){
   const t=est.tipo;
@@ -1896,6 +1890,11 @@ function refrescarTipo(){refrescarBiblio()}
   const inp=$("tipoTexto");
   inp.value=est.tipo.texto;
   inp.addEventListener("input",e=>{est.tipo.texto=e.target.value;refrescarBiblio()});
+  $("tipoDelim").addEventListener("input",e=>{
+    est.tipo.delim=+e.target.value;
+    $("tipoDelimV").textContent=e.target.value;
+    refrescarBiblio();
+  });
   $("tipoTinta").addEventListener("input",e=>{est.tipo.tinta=e.target.value;refrescarBiblio()});
   $("tipoFondo").addEventListener("input",e=>{est.tipo.fondo=e.target.value;refrescarBiblio()});
 })();
