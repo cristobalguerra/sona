@@ -350,12 +350,7 @@ footer{
               </radialGradient>
               <filter id="fSombra" x="-60%" y="-200%" width="220%" height="500%"><feGaussianBlur stdDeviation="7"/></filter>
             </defs>
-            <g id="pecSombras" filter="url(#fSombra)"></g>
-            <g id="pecCuerpo">
-              <clipPath id="clipMasa"><path id="clipMasaPath"/></clipPath>
-              <path id="pecMasa" fill="url(#gradPuente)"/>
-              <g id="pecOrbes" clip-path="url(#clipMasa)"></g>
-            </g>
+            <g id="pecPalabra" fill="url(#gradPuente)"></g>
           </svg>
         </div>
         <div class="etq-cuerpo">
@@ -1597,64 +1592,18 @@ function coloresOrbe(){
 }
 let orbeEls=[], sombraEls=[];
 function pintarPecera(){
-  const g=$("pecOrbes");if(!g)return;
-  const lista=circulosOrganismo();
-  /* sombras sutiles en el piso invisible: el flotar se vuelve legible.
-     Perspectiva: las esferas del frente (y mayor) proyectan sombra
-     más presente; las del fondo, más leve y pequeña. */
-  const gs=$("pecSombras");
-  if(sombraEls.length!==lista.length){
-    gs.innerHTML="";sombraEls=[];
-    const ns="http://www.w3.org/2000/svg";
-    for(let i=0;i<lista.length;i++){
-      const e=document.createElementNS(ns,"ellipse");
-      e.setAttribute("fill","url(#gradSombra)");
-      gs.appendChild(e);sombraEls.push(e);
-    }
-  }
-  const ys=lista.map(c=>c[1]);
-  const yMin=Math.min(...ys), yMax=Math.max(...ys);
-  lista.forEach(([x,y,r],i)=>{
-    const d01=(y-yMin)/((yMax-yMin)||1);
-    const rx=r*(0.9+0.5*d01);
-    sombraEls[i].setAttribute("cx",x.toFixed(1));
-    sombraEls[i].setAttribute("cy","274");
-    sombraEls[i].setAttribute("rx",rx.toFixed(1));
-    sombraEls[i].setAttribute("ry",(rx*0.16).toFixed(1));
-    sombraEls[i].setAttribute("opacity",(0.05+0.05*d01).toFixed(2));
-  });
-  if(orbeEls.length!==lista.length){
-    g.innerHTML="";orbeEls=[];
-    const ns="http://www.w3.org/2000/svg";
-    for(let i=0;i<lista.length;i++){
-      const c=document.createElementNS(ns,"circle");
-      c.setAttribute("fill","url(#gradOrbe)");
-      g.appendChild(c);orbeEls.push(c);
-    }
-  }
-  lista.forEach(([x,y,r],i)=>{
-    orbeEls[i].setAttribute("cx",x.toFixed(1));
-    orbeEls[i].setAttribute("cy",y.toFixed(1));
-    orbeEls[i].setAttribute("r",r.toFixed(1));
-  });
+  /* el cielo de la etiqueta muestra la PALABRA viva de la
+     tipografía (los círculos fueron retirados); el color sigue
+     siendo del ESTADO: gradiente de luz cenital claro→profundo */
+  const g=$("pecPalabra");if(!g)return;
   const col=coloresOrbe();
-  $("gOrbe1").setAttribute("stop-color",col.claro);
-  $("gOrbe1b").setAttribute("stop-color",col.claro);
-  $("gOrbe2").setAttribute("stop-color",col.profundo);
-  /* la masa: unión implícita — una forma nueva; los orbes quedan
-     como brillos perlados recortados DENTRO de la masa */
-  const dMasa=contornoMetaball(lista);
-  $("pecMasa").setAttribute("d",dMasa);
-  $("clipMasaPath").setAttribute("d",dMasa);
   $("gPu1").setAttribute("stop-color",mezclaHex(col.claro,col.profundo,0.30));
   $("gPu2").setAttribute("stop-color",col.profundo);
-  const cuerpo=$("pecCuerpo");
-  cuerpo.setAttribute("fill-opacity",densidadTinta().toFixed(2));
-  const bl=desenfoqueOrganismo();
-  if(bl>0.2){
-    $("feBlurOrg").setAttribute("stdDeviation",bl.toFixed(1));
-    cuerpo.setAttribute("filter","url(#fBlurOrg)");
-  }else cuerpo.removeAttribute("filter");
+  const p=palabraEnCielo();
+  const firma=p?`${estadoBiblio().k}|${est.tipo.texto}|${est.tipo.delim}`:"vacia";
+  if(g.dataset.firma===firma)return;
+  g.dataset.firma=firma;
+  g.innerHTML=p?p.ids.map((id,i)=>id?`<path transform="translate(${(p.ox+p.xs[i]*p.esc).toFixed(1)} ${p.oy.toFixed(1)}) scale(${p.esc.toFixed(4)})" d="${BIB_PATHS[id]}"/>`:"").join(""):"";
 }
 
 /* ---------- etiqueta: ficha de análisis ---------- */
@@ -1816,6 +1765,15 @@ function idsBiblio(k){
     const izq=on.has(i-1), der=on.has(i);
     return BIB_ROLES[it][izq&&der?"ambas":izq?"izq":der?"der":"normal"];
   });
+}
+function palabraEnCielo(){
+  /* la palabra de la tipografía compuesta dentro del cielo de la
+     etiqueta (700×310): centrada, con aire, sin tocar el piso */
+  const ids=idsBiblio(estadoBiblio().k);
+  if(!ids.some(Boolean))return null;
+  const {xs,w}=xsBiblio(palabraBiblio());
+  const esc=Math.min(560/w,0.72);
+  return {ids,xs,esc,ox:350-(w*esc)/2,oy:158-100*esc};
 }
 function estadoBiblio(){
   const rm=movimientoReducido();
@@ -2067,51 +2025,23 @@ function pintarEtiqueta(ctx,W){
   /* el organismo del lugar */
   ctx.save();
   ctx.beginPath();ctx.rect(0,0,W,SKY);ctx.clip();
-  /* sombras de piso */
+  /* la palabra del lugar (tipografía viva) con la luz del estado */
+  const colE=coloresOrbe();
   {
-    const lista=circulosOrganismo();
-    const ys=lista.map(c=>c[1]);
-    const yMin=Math.min(...ys), yMax=Math.max(...ys);
-    for(const [ox,oy,or] of lista){
-      const d01=(oy-yMin)/((yMax-yMin)||1);
-      const rx=or*(0.9+0.5*d01);
-      ctx.save();
-      ctx.globalAlpha=0.05+0.05*d01;
-      ctx.filter=`blur(${(7*U).toFixed(1)}px)`;
-      ctx.translate(ox*U,274*U);ctx.scale(1,0.16);
-      const gSom=ctx.createRadialGradient(0,0,0,0,0,rx*U);
-      gSom.addColorStop(0,"rgba(31,44,57,.28)");gSom.addColorStop(0.55,"rgba(31,44,57,.12)");gSom.addColorStop(1,"rgba(31,44,57,0)");
-      ctx.fillStyle=gSom;
-      ctx.beginPath();ctx.arc(0,0,rx*U,0,7);ctx.fill();
-      ctx.restore();
+    const p=palabraEnCielo();
+    if(p){
+      const gMa=ctx.createLinearGradient(0,70*U,0,300*U);
+      gMa.addColorStop(0,mezclaHex(colE.claro,colE.profundo,0.30));
+      gMa.addColorStop(1,colE.profundo);
+      ctx.fillStyle=gMa;
+      p.ids.forEach((id,i)=>{
+        if(!id)return;
+        ctx.setTransform(p.esc*U,0,0,p.esc*U,(p.ox+p.xs[i]*p.esc)*U,p.oy*U);
+        ctx.fill(new Path2D(BIB_PATHS[id]));
+      });
+      ctx.setTransform(1,0,0,1,0,0);
     }
   }
-  ctx.globalAlpha=densidadTinta();
-  const colE=coloresOrbe();
-  const blE=desenfoqueOrganismo();
-  if(blE>0.2)ctx.filter=`blur(${(blE*U).toFixed(1)}px)`;
-  /* la masa unificada + brillos recortados adentro */
-  const listaE=circulosOrganismo();
-  const dMasaE=contornoMetaball(listaE);
-  const gMa=ctx.createLinearGradient(0,70*U,0,300*U);
-  gMa.addColorStop(0,mezclaHex(colE.claro,colE.profundo,0.30));
-  gMa.addColorStop(1,colE.profundo);
-  ctx.fillStyle=gMa;
-  ctx.setTransform(U,0,0,U,0,0);
-  const pMasa=new Path2D(dMasaE);
-  ctx.fill(pMasa,"nonzero");
-  ctx.save();
-  ctx.clip(pMasa,"nonzero");
-  ctx.setTransform(1,0,0,1,0,0);
-  for(const [ox,oy,or] of listaE){
-    const gO=ctx.createRadialGradient(ox*U,(oy-or*0.72)*U,or*0.05*U, ox*U,(oy-or*0.72)*U,or*1.84*U);
-    gO.addColorStop(0,colE.claro);gO.addColorStop(0.24,colE.claro);gO.addColorStop(1,colE.profundo);
-    ctx.fillStyle=gO;
-    ctx.beginPath();ctx.arc(ox*U,oy*U,or*U,0,7);ctx.fill();
-  }
-  ctx.restore();
-  ctx.setTransform(1,0,0,1,0,0);
-  ctx.filter="none";
   /* granulado del cielo (determinista) — como el overlay del vivo */
   ctx.globalAlpha=0.16;
   ctx.globalCompositeOperation="overlay";
@@ -2283,16 +2213,8 @@ function svgEtiqueta(){
       <radialGradient id="gSomEx"><stop offset="0" stop-color="#1f2c39" stop-opacity=".28"/><stop offset=".55" stop-color="#1f2c39" stop-opacity=".12"/><stop offset="1" stop-color="#1f2c39" stop-opacity="0"/></radialGradient>
       <filter id="fSomEx" x="-60%" y="-200%" width="220%" height="500%"><feGaussianBlur stdDeviation="7"/></filter>
       <filter id="gnEx"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.5 0"/></filter>
-      ${(()=>{const l=circulosOrganismo();const ys=l.map(c=>c[1]);const yMin=Math.min(...ys),yMax=Math.max(...ys);
-        return '<g filter="url(#fSomEx)">'+l.map(([x,y,r])=>{const d01=(y-yMin)/((yMax-yMin)||1);const rx=r*(0.9+0.5*d01);
-          return `<ellipse cx="${x.toFixed(1)}" cy="274" rx="${rx.toFixed(1)}" ry="${(rx*0.16).toFixed(1)}" fill="url(#gSomEx)" opacity="${(0.05+0.05*d01).toFixed(2)}"/>`;}).join("")+'</g>';})()}
-      <clipPath id="clipMx"><path d="${contornoMetaball(circulosOrganismo())}"/></clipPath>
-      <g fill-opacity="${densidadTinta().toFixed(2)}"${desenfoqueOrganismo()>0.2?' filter="url(#ob)"':''}>
-        <path d="${contornoMetaball(circulosOrganismo())}" fill="url(#gPuEx)"/>
-        <g fill="url(#gOrbEx)" clip-path="url(#clipMx)">
-        ${circulosOrganismo().map(([x,y,r])=>`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}"/>`).join("")}
-        </g>
-      </g>
+      ${(()=>{const p=palabraEnCielo();if(!p)return"";
+        return '<g fill="url(#gPuEx)">'+p.ids.map((id,i)=>id?`<path transform="translate(${(p.ox+p.xs[i]*p.esc).toFixed(1)} ${p.oy.toFixed(1)}) scale(${p.esc.toFixed(4)})" d="${BIB_PATHS[id]}"/>`:"").join("")+'</g>';})()}
       <rect width="${W}" height="${SKY}" filter="url(#gnEx)" opacity=".35" style="mix-blend-mode:overlay"/>
     </g>
     <text x="40" y="${SKY+38}" class="cab">ANÁLISIS DEL LUGAR</text>
