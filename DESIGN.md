@@ -89,14 +89,13 @@ Sistema tipográfico paramétrico: **cada letra es datos, no trazos**. Lienzo 20
 - **Salidas**: SVG prioridad (rects rx + path de puentes, viewBox con margen 50) · Canvas/PNG (roundRect + Path2D) · Copiar SVG. Video no aplica (estático).
 - **Criterio de éxito cumplido**: palabras legibles Y gráficos abstractos con los mismos parámetros (tracking −50 + maxD 160 teje la palabra en una masa líquida).
 
-### Modo Biblioteca (2026-07-22 — segundo intento, test "sona")
+### Biblioteca de flancos — v3 (2026-07-22, definitiva)
 
-Biblioteca de 28 variantes dibujadas a mano por el usuario: 4 letras × 6 conexiones ({izq,der} × {arriba,media,abajo}) + 4 normales sin efecto. El sistema TIENE la biblioteca y JUEGA la decisión de qué versión usar para dar movimiento a la palabra:
+La vista Logotipo (masa blanda que fluctuaba) fue RETIRADA a petición del usuario; la física ya no corre. Vistas: Etiqueta (default) · Tipografía.
 
-- **Anatomía**: cuerpo 149 u de alto; pestañas *arriba* = brazo con nodo (asciende hasta 37 u), *media* = protuberancia/muesca horizontales que se ANIDAN entre sí (nido 26 u), *abajo* = nodo descendente. Normales a escala 0.788 para casar el cuerpo.
-- **Soldaduras**: der×izq a la misma altura → arriba/abajo comparten el nodo (centros coincidentes, una sola perla); media anida protuberancia en muesca. Sin pareja → la pestaña queda como gesto suelto o la letra descansa en su normal.
-- **Partitura**: 8 compases deterministas (loop exacto 4.8 s, `SCORE_BIB`): la conexión viaja s∪o → o∪n (3 alturas) → n∪a, con dos compases dobles. **Retícula FIJA** (2026-07-22, "todo en el mismo espacio, la delimitación siempre la misma"): ranura de cuerpo 149.7 + delimitación constante 36; los cuerpos se anclan por su canto izquierdo modal (~149 u uniforme en las 28 variantes) y JAMÁS se mueven — solo las pestañas cambian, alcanzando a la vecina a través del espacio constante. Transición: crossfade 0.23 s en sitio, sin deslizamiento. `prefers-reduced-motion` congela el compás 1.
-- **Fuente**: SVGs en `/variantes` (Recursos 1–24 conexiones, 25=S 26=N 27=A 28=O normales), paths inline en `BIBLIO_PATHS`/`BIBLIO_META` (self-contained). Exports SVG/PNG/Copiar del compás vigente.
+Biblioteca dibujada a mano: cajas UNIFORMES de 200×200, tinta a sangre por los cuatro bordes. Cada letra en 4 estados: **normal** (costura pellizcada con muescas), **flanco izquierdo fluido**, **flanco derecho fluido**, **ambos** — ids: S{n17,i5,d13,a9} · A{n6,i18,d14,a10} · N{n7,i19,d15,a11} · O{n16,i8,d20,a12}. La palabra vive SIEMPRE como banda continua en ranuras fijas (caja 200, solape −2 constante — "todo en el mismo espacio, la delimitación siempre la misma"); lo que se anima es el CARÁCTER de cada costura.
+
+Partitura procedural de 8 compases (loop exacto 4.8 s) generalizada a cualquier texto: abierto → pares → todas → impares → primera → todas → última → abierto. El rol de cada letra se deriva de sus junturas activas. El usuario ESCRIBE el texto (s·o·n·a por ahora; espacios = ranura 120; caracteres fuera de biblioteca se omiten). Crossfade en sitio 0.23 s; `prefers-reduced-motion` congela "abierto". Exports SVG/PNG/Copiar del compás vigente. Fuente en `/variantes` (Recursos 5–20).
 
 ## Reglas de contraste
 
