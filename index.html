@@ -347,14 +347,14 @@ footer{
                 <feOffset in="SourceAlpha" dy="5" result="dAbajo"/>
                 <feComposite in="SourceAlpha" in2="dAbajo" operator="out" result="crestaLuz"/>
                 <feGaussianBlur in="crestaLuz" stdDeviation="2.2" result="crestaLuzB"/>
-                <feFlood id="fvLuz" flood-color="#ffffff" flood-opacity="0.85"/>
+                <feFlood id="fvLuz" flood-color="#ffffff" flood-opacity="0.42"/>
                 <feComposite in2="crestaLuzB" operator="in" result="luz"/>
                 <feOffset in="SourceAlpha" dy="-5" result="dArriba"/>
                 <feComposite in="SourceAlpha" in2="dArriba" operator="out" result="crestaSom"/>
                 <feGaussianBlur in="crestaSom" stdDeviation="2.6" result="crestaSomB"/>
-                <feFlood id="fvSom" flood-color="#596f63" flood-opacity="0.55"/>
+                <feFlood id="fvSom" flood-color="#596f63" flood-opacity="0.28"/>
                 <feComposite in2="crestaSomB" operator="in" result="som"/>
-                <feFlood id="fvCuerpo" flood-color="#e4ece6" flood-opacity="0.12"/>
+                <feFlood id="fvCuerpo" flood-color="#e4ece6" flood-opacity="0.06"/>
                 <feComposite in2="SourceAlpha" operator="in" result="cuerpo"/>
                 <feMerge><feMergeNode in="cuerpo"/><feMergeNode in="som"/><feMergeNode in="luz"/></feMerge>
               </filter>
@@ -366,7 +366,7 @@ footer{
               </radialGradient>
               <filter id="fSombra" x="-60%" y="-200%" width="220%" height="500%"><feGaussianBlur stdDeviation="7"/></filter>
             </defs>
-            <g id="pecPalabraSombra" transform="translate(0 13)" filter="url(#fSomPal)" opacity="0.32" fill="#596f63"></g>
+            <g id="pecPalabraSombra" transform="translate(0 13)" filter="url(#fSomPal)" opacity="0.16" fill="#596f63"></g>
             <g id="pecPalabra" filter="url(#fVidrio)"></g>
           </svg>
         </div>
@@ -2078,12 +2078,12 @@ function pintarEtiqueta(ctx,W){
         x2.drawImage(masc,0,dy);
         return c2;
       };
-      ctx.save();ctx.globalAlpha=0.32;ctx.filter=`blur(${(6*U).toFixed(1)}px)`;
+      ctx.save();ctx.globalAlpha=0.16;ctx.filter=`blur(${(6*U).toFixed(1)}px)`;
       ctx.drawImage(tinta(mk,colE.profundo),0,13*U);ctx.restore();
-      ctx.save();ctx.globalAlpha=0.12;ctx.drawImage(tinta(mk,colE.claro),0,0);ctx.restore();
-      ctx.save();ctx.globalAlpha=0.55;ctx.filter=`blur(${(2.6*U).toFixed(1)}px)`;
+      ctx.save();ctx.globalAlpha=0.06;ctx.drawImage(tinta(mk,colE.claro),0,0);ctx.restore();
+      ctx.save();ctx.globalAlpha=0.28;ctx.filter=`blur(${(2.6*U).toFixed(1)}px)`;
       ctx.drawImage(tinta(cresta(mk,-5*U),colE.profundo),0,0);ctx.restore();
-      ctx.save();ctx.globalAlpha=0.85;ctx.filter=`blur(${(2.2*U).toFixed(1)}px)`;
+      ctx.save();ctx.globalAlpha=0.42;ctx.filter=`blur(${(2.2*U).toFixed(1)}px)`;
       ctx.drawImage(tinta(cresta(mk,5*U),mezclaHex(colE.claro,"#ffffff",0.75)),0,0);ctx.restore();
       ctx.filter="none";
     }
@@ -2260,14 +2260,14 @@ function svgEtiqueta(){
         <feOffset in="SourceAlpha" dy="5" result="dAbajo"/>
         <feComposite in="SourceAlpha" in2="dAbajo" operator="out" result="crestaLuz"/>
         <feGaussianBlur in="crestaLuz" stdDeviation="2.2" result="crestaLuzB"/>
-        <feFlood flood-color="${mezclaHex(coloresOrbe().claro,"#ffffff",0.75)}" flood-opacity="0.85"/>
+        <feFlood flood-color="${mezclaHex(coloresOrbe().claro,"#ffffff",0.75)}" flood-opacity="0.42"/>
         <feComposite in2="crestaLuzB" operator="in" result="luz"/>
         <feOffset in="SourceAlpha" dy="-5" result="dArriba"/>
         <feComposite in="SourceAlpha" in2="dArriba" operator="out" result="crestaSom"/>
         <feGaussianBlur in="crestaSom" stdDeviation="2.6" result="crestaSomB"/>
-        <feFlood flood-color="${coloresOrbe().profundo}" flood-opacity="0.55"/>
+        <feFlood flood-color="${coloresOrbe().profundo}" flood-opacity="0.28"/>
         <feComposite in2="crestaSomB" operator="in" result="som"/>
-        <feFlood flood-color="${coloresOrbe().claro}" flood-opacity="0.12"/>
+        <feFlood flood-color="${coloresOrbe().claro}" flood-opacity="0.06"/>
         <feComposite in2="SourceAlpha" operator="in" result="cuerpo"/>
         <feMerge><feMergeNode in="cuerpo"/><feMergeNode in="som"/><feMergeNode in="luz"/></feMerge>
       </filter>
@@ -2277,7 +2277,7 @@ function svgEtiqueta(){
       <filter id="gnEx"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.5 0"/></filter>
       ${(()=>{const p=palabraEnCielo();if(!p)return"";
         const letras=p.ids.map((id,i)=>id?`<path transform="translate(${(p.ox+p.xs[i]*p.esc).toFixed(1)} ${p.oy.toFixed(1)}) scale(${p.esc.toFixed(4)})" d="${BIB_PATHS[id]}"/>`:"").join("");
-        return `<g transform="translate(0 13)" filter="url(#fSomPalEx)" opacity="0.32" fill="${coloresOrbe().profundo}">${letras}</g><g filter="url(#fVidrioEx)">${letras}</g>`;})()}
+        return `<g transform="translate(0 13)" filter="url(#fSomPalEx)" opacity="0.16" fill="${coloresOrbe().profundo}">${letras}</g><g filter="url(#fVidrioEx)">${letras}</g>`;})()}
       <rect width="${W}" height="${SKY}" filter="url(#gnEx)" opacity=".35" style="mix-blend-mode:overlay"/>
     </g>
     <text x="40" y="${SKY+38}" class="cab">ANÁLISIS DEL LUGAR</text>
