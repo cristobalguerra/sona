@@ -298,6 +298,7 @@ footer{
 .tipoCtl input[type=range]{flex:1;accent-color:var(--acento)}
 #panel input[type=color]{width:34px;height:22px;border:1px solid var(--hair);border-radius:6px;background:none;padding:1px}
 .pieTipo{margin-top:9px;font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.55}
+.etq-firma{text-align:center;font:italic 400 21px Georgia,"Times New Roman",serif;color:#000;margin:15px 0 1px;letter-spacing:.03em}
 </style>
 </head>
 <body>
@@ -391,6 +392,7 @@ footer{
             <p id="etqDesc"></p>
           </div>
           <div class="etq-barra"><span class="cifra" id="etqPct"></span><span class="tapa" id="etqTapa"></span></div>
+          <div class="etq-firma">sona</div>
           <div class="etq-pie" id="etqPie"></div>
         </div>
       </div>
@@ -2190,7 +2192,14 @@ function pintarEtiqueta(ctx,W){
   ctx.font=grot(300,11);ctx.globalAlpha=.5;
   ctx.fillText("%",54*U+wp+2*U,yB+bh/2+3*U);
   ctx.globalAlpha=1;
+  /* firma serif central */
+  ctx.fillStyle="#000000";
+  ctx.textAlign="center";
+  ctx.font=`italic ${Math.round(34*U)}px Georgia, "Times New Roman", serif`;
+  ctx.fillText("sona",W/2,yB+bh+46*U);
+  ctx.textAlign="left";
   /* pie */
+  ctx.fillStyle=est.tinta;
   ctx.font=mono(8.5);ctx.globalAlpha=.55;
   ctx.fillText("SONA · INSTRUMENTO DEL LUGAR",40*U,H-26*U);
   const firma=firmaLecturas().toUpperCase();
@@ -2297,6 +2306,7 @@ function svgEtiqueta(){
       <rect x="${40+(W-80)*pct/100}" y="${yB}" width="${(W-80)*(100-pct)/100}" height="42" clip-path="url(#cB)" fill="${papelMood()}" opacity=".82"/>
       <text x="54" y="${yB+28}" class="bnum">${pct}<tspan font-size="11" opacity=".5">%</tspan></text>
     </g>
+    <text x="${W/2}" y="${yB+88}" text-anchor="middle" fill="#000000" style="font:italic 34px Georgia,'Times New Roman',serif;letter-spacing:.03em">sona</text>
     <text x="40" y="${H-22}" class="pie">SONA · INSTRUMENTO DEL LUGAR</text>
     <text x="${W-40}" y="${H-22}" class="pie" text-anchor="end">${firmaLecturas().toUpperCase()}</text>
   </g>
