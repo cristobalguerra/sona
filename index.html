@@ -1795,7 +1795,7 @@ function palabraEnCielo(){
   const ids=idsBiblio(estadoBiblio().k);
   if(!ids.some(Boolean))return null;
   const {xs,w}=xsBiblio(palabraBiblio());
-  const esc=Math.min(560/w,0.72);
+  const esc=Math.min(560/w,0.72)*0.8;   /* −20% de tamaño (ajuste del usuario) */
   return {ids,xs,esc,ox:350-(w*esc)/2,oy:158-100*esc};
 }
 function estadoBiblio(){
