@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e1013">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SONA">
 <title>SONA · La app</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,8 +35,8 @@
   --grot:"Hanken Grotesk", system-ui, sans-serif;
   --grano:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
 }
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overscroll-behavior:none}
 body{
   font-family:var(--mono);color:var(--texto);
   background:#08090b;
@@ -40,6 +45,7 @@ body{
 }
 #app{
   position:relative;width:100%;height:100dvh;overflow:hidden;
+  touch-action:pan-y;
   background:var(--fondo);
 }
 @media (min-width:520px){
@@ -99,7 +105,7 @@ body{
   padding:calc(18px + env(safe-area-inset-top)) 22px calc(22px + env(safe-area-inset-bottom));
   display:flex;flex-direction:column;gap:20px;
   opacity:0;pointer-events:none;transition:opacity .45s ease;
-  overflow-y:auto;
+  overflow-y:auto;overscroll-behavior:contain;
 }
 .pant.viva{opacity:1;pointer-events:auto;z-index:2}
 
@@ -380,6 +386,8 @@ body{
   transition:transform .4s cubic-bezier(.34,1.3,.5,1),opacity .3s ease;
 }
 #ficha.ver, .tarjetaFlot.ver, #ajuste.ver{transform:none;opacity:1;pointer-events:auto}
+#ficha{max-height:calc(100dvh - 20px);display:flex;flex-direction:column}
+#ficha .cuerpoF{overflow-y:auto;overscroll-behavior:contain;min-height:0}
 
 /* la franja-aurora de la ficha: el mood de ESA sala, vivo */
 #ficha .cieloF{
@@ -574,7 +582,7 @@ body{
             <feTurbulence type="fractalNoise" baseFrequency="0.55" numOctaves="2" seed="7" result="n"/>
             <feDisplacementMap in="SourceGraphic" in2="n" scale="0" xChannelSelector="R" yChannelSelector="G"/>
           </filter>
-        <g id="gBanda" filter="url(#fRelieve)"><g id="gMorf" filter="url(#fDisuelve)"></g></g>
+        <g id="gBanda" filter="url(#fRelieve)"><g id="gMorf"></g></g>
       </svg></div>
     </div>
     <!-- la lectura del análisis: la onda del ambiente, en vivo -->
@@ -773,6 +781,7 @@ $("estadoPal").textContent=CLIMA_LUGAR[CLIMA_GENERAL];
 const p0=$("p0"),p1=$("p1");
 function desbloquear(){
   p1.classList.add("viva");            /* el plano YA está entero debajo */
+  p1.style.pointerEvents="none";       /* blindado durante el slide */
   p0.classList.remove("arrastrando");
   p0.classList.add("fuera");           /* la capa sube hasta arriba, sin fade */
   setTimeout(()=>{
@@ -782,6 +791,7 @@ function desbloquear(){
     p0.classList.remove("fuera");p0.style.transform="";
     void p0.offsetHeight;              /* reflow antes de restaurar */
     p0.style.transition="";
+    p1.style.pointerEvents="";         /* fin del blindaje */
   },rm?0:860);
 }
 $("lineaEntrar").addEventListener("click",desbloquear);
@@ -879,11 +889,18 @@ Promise.all(PALABRA.map(async L=>{
         const c=Math.floor(s/(base*f)+d)%seq.length;
         if(c!==vis[i]){vis[i]=c;fijar(i,seq[c])}
       });
-      /* envolvente del grano: ataque lento, caída lenta — respiración */
+      /* envolvente del grano: ataque lento, caída lenta — respiración.
+         El filtro SOLO se monta durante el pulso (feTurbulence es caro
+         en móvil aunque el desplazamiento sea 0). */
       morfMeta*=0.991;
       morf+=(morfMeta-morf)*0.028;
-      if(morf>0.008)feDisp.setAttribute("scale",(morf*11).toFixed(2));
-      else if(morf){morf=0;feDisp.setAttribute("scale","0")}
+      if(morf>0.008){
+        if(!gMorf.hasAttribute("filter"))gMorf.setAttribute("filter","url(#fDisuelve)");
+        feDisp.setAttribute("scale",(morf*11).toFixed(2));
+      }else if(morf){
+        morf=0;feDisp.setAttribute("scale","0");
+        gMorf.removeAttribute("filter");
+      }
       requestAnimationFrame(reloj);
     })(performance.now());
   }
@@ -1312,7 +1329,16 @@ void main(){ mainImage(gl_FragColor, gl_FragCoord.xy); }`;
   const uTinte=gl.getUniformLocation(prog,"uTinte");
   const uMezcla=gl.getUniformLocation(prog,"uMezcla");
 
-  const ESCALA=0.75;
+  /* nitidez según densidad, con tope (rendimiento móvil) */
+  const ESCALA=Math.min(1.4,(window.devicePixelRatio||1)*0.7);
+  /* ¿el canvas está en una pantalla visible? (ahorra GPU en móvil) */
+  const activo=()=>{
+    const pant=canvas.closest(".pant");
+    if(pant)return pant.classList.contains("viva");
+    const flot=canvas.closest("#ficha");
+    if(flot)return flot.classList.contains("ver");
+    return true;
+  };
   function medir(){
     const r=canvas.getBoundingClientRect();
     canvas.width=Math.max(1,Math.round(r.width*ESCALA));
@@ -1345,7 +1371,7 @@ void main(){ mainImage(gl_FragColor, gl_FragCoord.xy); }`;
     gl.drawArrays(gl.TRIANGLES,0,3);
   }
   if(rm){cuadro()}                    /* reduced-motion: un solo frame, quieto */
-  else{(function loop(){cuadro();requestAnimationFrame(loop)})()}
+  else{(function loop(){if(activo())cuadro();requestAnimationFrame(loop)})()}
   addEventListener("resize",()=>{medir();if(rm)cuadro()});
 }
 montarOnda("ondaAnalisis");  /* la puerta */
