@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZONA \ SONA · Posicionamiento — diagnóstico y terapia del lugar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&family=Hanken+Grotesk:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ZONA \ SONA — lámina de posicionamiento
+   ZONA diagnostica (papel/tinta: el expediente).
+   SONA trata (cielo/bruma: el ambiente que responde).
+   ============================================================ */
+:root{
+  --papel:#f1f0ea;
+  --tinta:#1e2126;
+  --tintaSuave:rgba(30,33,38,.6);
+  --hair:rgba(30,33,38,.14);
+  --bruma:#7d93ab;
+  --acento:#6b84a0;
+  --cieloGrad:linear-gradient(180deg,#8fa0b4 0%,#aebbc6 42%,#cfd4d4 74%,#e3e0d8 100%);
+  --mono:"Fragment Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --grot:"Hanken Grotesk", system-ui, sans-serif;
+  --grano:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:var(--mono);background:var(--papel);color:var(--tinta);
+  font-size:12px;line-height:1.55;-webkit-font-smoothing:antialiased;
+}
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:9;
+  background:var(--grano);background-size:220px 220px;opacity:.35;mix-blend-mode:overlay;
+}
+#hoja{max-width:960px;margin:0 auto;padding:56px 28px 80px}
+
+header{text-align:center;margin-bottom:50px}
+header .marca{font-size:13px;letter-spacing:.14em}
+header .marca b{font-weight:400;background:var(--tinta);color:var(--papel);padding:2px 8px 3px}
+header .marca i{font-style:italic;color:var(--acento);margin:0 4px}
+header h1{
+  font-family:var(--grot);font-weight:200;font-size:clamp(28px,4.4vw,42px);
+  letter-spacing:-.01em;margin-top:16px;line-height:1.15;
+}
+header .sub{margin-top:8px;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--tintaSuave)}
+
+/* ---------- el díptico ---------- */
+#diptico{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:stretch}
+@media (max-width:760px){#diptico{grid-template-columns:1fr}}
+
+.cara{
+  border:1px solid var(--tinta);border-radius:18px;overflow:hidden;
+  display:flex;flex-direction:column;
+}
+.cara .franja{
+  padding:16px 24px;display:flex;justify-content:space-between;align-items:baseline;
+}
+.cara .franja .rol{font-size:9.5px;letter-spacing:.26em;text-transform:uppercase}
+.cara .franja .nom{font-size:13px;letter-spacing:.18em}
+
+/* ZONA: expediente — tinta sobre papel */
+.cara.zona .franja{background:var(--tinta);color:var(--papel)}
+/* SONA: ambiente — el cielo */
+.cara.sona .franja{background:var(--cieloGrad);color:var(--tinta);position:relative}
+.cara.sona .franja::after{content:"";position:absolute;inset:0;background:var(--grano);background-size:220px;opacity:.4;mix-blend-mode:overlay;pointer-events:none}
+
+.cara .cuerpo{padding:22px 24px 24px;display:flex;flex-direction:column;gap:18px;flex:1}
+.verbo{
+  font-family:var(--grot);font-weight:200;font-size:clamp(24px,2.6vw,32px);line-height:1.15;
+}
+.verbo em{font-style:normal;color:var(--acento)}
+.bloque .cab{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--tintaSuave);margin-bottom:7px}
+.bloque li{
+  list-style:none;padding:6px 0;border-top:1px solid var(--hair);
+  font-size:11.5px;letter-spacing:.04em;display:flex;gap:10px;align-items:baseline;
+}
+.bloque li::before{content:"\\";color:var(--acento);font-style:italic}
+.frase{
+  margin-top:auto;padding-top:14px;border-top:1px solid var(--hair);
+  font-size:11px;font-style:italic;color:var(--tintaSuave);line-height:1.7;
+}
+
+/* ---------- el ciclo ---------- */
+#ciclo{margin:54px 0 0;text-align:center}
+#ciclo .cab{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--tintaSuave);margin-bottom:22px}
+.vuelta{
+  display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px 14px;
+  font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+}
+.vuelta .paso{
+  border:1px solid var(--tinta);border-radius:999px;padding:9px 18px;background:var(--papel);
+}
+.vuelta .paso.z{background:var(--tinta);color:var(--papel)}
+.vuelta .paso.s{background:var(--cieloGrad);border-color:var(--hair)}
+.vuelta .fl{color:var(--acento);font-size:13px}
+#ciclo .vuelve{margin-top:14px;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--tintaSuave)}
+#ciclo .vuelve::before{content:"↺ ";color:var(--acento)}
+
+/* ---------- audiencia ---------- */
+#quien{margin-top:54px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media (max-width:760px){#quien{grid-template-columns:1fr}}
+.q{border-top:1px solid var(--tinta);padding-top:14px}
+.q .et{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--tintaSuave)}
+.q .quien{font-family:var(--grot);font-weight:300;font-size:19px;margin-top:6px;line-height:1.25}
+.q p{margin-top:8px;font-size:10.5px;letter-spacing:.03em;color:var(--tintaSuave);line-height:1.7}
+
+/* ---------- piloto ---------- */
+#piloto{
+  margin-top:54px;border:1.5px solid var(--tinta);border-radius:16px;
+  padding:22px 28px;display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;
+}
+#piloto .t{font-family:var(--grot);font-weight:300;font-size:20px;line-height:1.3}
+#piloto .t em{font-style:italic;color:var(--acento)}
+#piloto .m{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--tintaSuave);line-height:2}
+
+footer{
+  margin-top:60px;padding-top:16px;border-top:1px solid var(--hair);
+  display:flex;justify-content:space-between;gap:16px;
+  font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--tintaSuave);
+}
+@media print{body::after{display:none}#hoja{padding:20px}}
+</style>
+</head>
+<body>
+<div id="hoja">
+  <header>
+    <div class="marca"><b>ZONA</b><i>\</i><b>SONA</b></div>
+    <h1>El diagnóstico y la terapia del lugar</h1>
+    <div class="sub">Posicionamiento · un solo instrumento, dos gestos</div>
+  </header>
+
+  <div id="diptico">
+    <!-- ZONA: el diagnóstico -->
+    <div class="cara zona">
+      <div class="franja"><span class="rol">Diagnóstico</span><span class="nom">ZONA</span></div>
+      <div class="cuerpo">
+        <div class="verbo">El lugar se <em>ausculta</em> a través de quienes lo caminan.</div>
+        <div class="bloque">
+          <div class="cab">Qué hace</div>
+          <ul>
+            <li>Cada tap es un síntoma: desvíos, omisiones, pausas</li>
+            <li>El motor interpreta patrones de estrés y saturación</li>
+            <li>El Sensory Journey es el expediente del espacio</li>
+            <li>Anónimo por diseño: Session ID, nunca la persona</li>
+          </ul>
+        </div>
+        <div class="bloque">
+          <div class="cab">Qué entrega</div>
+          <ul>
+            <li>Mapa de zonas saturadas y horas críticas</li>
+            <li>Las 7 dimensiones medidas con evidencia real</li>
+            <li>Perfil sensorial del lugar, continuo en el tiempo</li>
+          </ul>
+        </div>
+        <p class="frase">ZONA no navega: escucha. El visitante que camina es el estetoscopio del edificio.</p>
+      </div>
+    </div>
+
+    <!-- SONA: la terapia -->
+    <div class="cara sona">
+      <div class="franja"><span class="rol">Terapia</span><span class="nom">SONA</span></div>
+      <div class="cuerpo">
+        <div class="verbo">El lugar <em>responde</em> y declara su clima.</div>
+        <div class="bloque">
+          <div class="cab">Qué hace</div>
+          <ul>
+            <li>Convierte el diagnóstico en estado: Calmado, Concurrido…</li>
+            <li>La identidad viva es la intervención: pantallas que serenan</li>
+            <li>La etiqueta es la receta: legible, exportable, pública</li>
+            <li>Rutas tranquilas, descansos y salidas como prescripción</li>
+          </ul>
+        </div>
+        <div class="bloque">
+          <div class="cab">Qué entrega</div>
+          <ul>
+            <li>El ambiente comunicado antes de entrar a la sala</li>
+            <li>Un lenguaje común entre el lugar y su visitante</li>
+            <li>La medición hecha atmósfera, no dashboard</li>
+          </ul>
+        </div>
+        <p class="frase">SONA no decora: trata. El estado del lugar es una prescripción que se ve, se proyecta y se cumple.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- el ciclo -->
+  <div id="ciclo">
+    <div class="cab">El ciclo clínico del espacio</div>
+    <div class="vuelta">
+      <span class="paso">El visitante camina</span><span class="fl">→</span>
+      <span class="paso z">ZONA diagnostica</span><span class="fl">→</span>
+      <span class="paso s">SONA interviene</span><span class="fl">→</span>
+      <span class="paso">El lugar cambia</span>
+    </div>
+    <div class="vuelve">y ZONA vuelve a medir</div>
+  </div>
+
+  <!-- audiencia -->
+  <div id="quien">
+    <div class="q">
+      <div class="et">Usuario primario</div>
+      <div class="quien">El visitante sensorialmente sensible</div>
+      <p>Espectro autista, TDAH, ansiedad sensorial, hiperacusia, adultos mayores. Para ellos el entorno es la barrera; el anonimato es dignidad: nadie se registra como "necesidad especial" para pedir calma.</p>
+    </div>
+    <div class="q">
+      <div class="et">Comprador</div>
+      <div class="quien">El lugar que quiere saber cómo se siente</div>
+      <p>Museos y espacios culturales primero; aeropuertos, estaciones, campus y hospitales después. Compran el ciclo completo: diagnóstico continuo + respuesta visible.</p>
+    </div>
+    <div class="q">
+      <div class="et">Beneficiario secundario</div>
+      <div class="quien">Cualquier visitante cansado</div>
+      <p>Diseñar para el caso extremo le sirve al caso común: la carriola, el jet lag, el lunes. Es la consecuencia, no el pitch.</p>
+    </div>
+  </div>
+
+  <!-- piloto -->
+  <div id="piloto">
+    <div class="t">Piloto ancla: <em>museo entre semana, 9 am.</em><br>Niebla afuera, salas en silencio.</div>
+    <div class="m">4 puntos de tap · 1 sala tratada<br>expediente a 30 días · etiqueta pública</div>
+  </div>
+
+  <footer>
+    <span>ZONA \ SONA · Sistema del lugar</span>
+    <span>Posicionamiento v1 · 23 · 07 · 2026</span>
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZONA \ SONA · El llenado del lugar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&family=Hanken+Grotesk:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ZONA \ SONA — EL LLENADO DEL LUGAR
+   Cómo un espacio entra al sistema: 5 capas en secuencia.
+   Cada capa deja al lugar operable; ninguna espera a la
+   siguiente. Lenguaje del sistema: papel/tinta/bruma, grano.
+   ============================================================ */
+:root{
+  --papel:#f1f0ea;
+  --tinta:#1e2126;
+  --tintaSuave:rgba(30,33,38,.6);
+  --hair:rgba(30,33,38,.14);
+  --bruma:#7d93ab;
+  --niebla:#ccd4da;
+  --acento:#6b84a0;
+  --cieloGrad:linear-gradient(180deg,#8fa0b4 0%,#aebbc6 42%,#cfd4d4 74%,#e3e0d8 100%);
+  --mono:"Fragment Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --grot:"Hanken Grotesk", system-ui, sans-serif;
+  --grano:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:var(--mono);background:var(--papel);color:var(--tinta);
+  font-size:12px;line-height:1.55;-webkit-font-smoothing:antialiased;
+}
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:9;
+  background:var(--grano);background-size:220px 220px;opacity:.32;mix-blend-mode:overlay;
+}
+#hoja{max-width:900px;margin:0 auto;padding:56px 28px 80px}
+
+header{text-align:center;margin-bottom:20px}
+header .marca{font-size:13px;letter-spacing:.14em}
+header .marca b{font-weight:400;background:var(--tinta);color:var(--papel);padding:2px 8px 3px}
+header .marca i{font-style:italic;color:var(--acento);margin:0 4px}
+header h1{font-family:var(--grot);font-weight:200;font-size:clamp(28px,4.2vw,40px);margin-top:16px;line-height:1.15}
+header .sub{margin-top:8px;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--tintaSuave)}
+
+.premisa{
+  max-width:56ch;margin:26px auto 50px;text-align:center;
+  font-size:11.5px;line-height:1.9;letter-spacing:.03em;color:var(--tintaSuave);
+}
+.premisa b{font-weight:400;color:var(--tinta)}
+
+/* ---------- capas: escalera ---------- */
+.capa{
+  display:grid;grid-template-columns:120px 1fr;gap:22px;
+  padding:26px 0;border-top:1px solid var(--hair);
+  align-items:start;
+}
+.capa:last-of-type{border-bottom:1px solid var(--hair)}
+@media (max-width:620px){.capa{grid-template-columns:1fr;gap:10px}}
+
+.capa .quien{
+  display:flex;flex-direction:column;gap:6px;
+}
+.capa .num{
+  font-family:var(--grot);font-weight:200;font-size:34px;line-height:1;color:var(--acento);
+}
+.capa .semana{font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--tintaSuave)}
+.capa .actor{
+  font-size:9px;letter-spacing:.16em;text-transform:uppercase;
+  border:1px solid var(--hair);border-radius:999px;padding:5px 10px;
+  align-self:flex-start;
+}
+.capa .actor.equipo{background:var(--tinta);color:var(--papel);border-color:var(--tinta)}
+.capa .actor.operador{background:var(--niebla);border-color:var(--niebla)}
+
+.capa h2{font-family:var(--grot);font-weight:300;font-size:22px;line-height:1.2;letter-spacing:0;margin-bottom:8px}
+.capa h2 em{font-style:normal;color:var(--acento)}
+.capa .como{margin:10px 0 0;display:flex;flex-direction:column;gap:0}
+.capa .como li{
+  list-style:none;padding:7px 0;border-top:1px solid var(--hair);
+  font-size:11.5px;letter-spacing:.04em;display:flex;gap:10px;align-items:baseline;
+}
+.capa .como li::before{content:"\\";color:var(--acento);font-style:italic;flex:none}
+.capa .deja{
+  margin-top:12px;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--tintaSuave);display:flex;gap:8px;align-items:baseline;
+}
+.capa .deja::before{content:"→";color:var(--acento)}
+.capa .deja b{font-weight:400;color:var(--tinta)}
+
+/* fuente declarada: cómo habla la app en cada capa */
+.fuente{
+  margin-top:10px;display:inline-block;
+  font-size:9.5px;letter-spacing:.08em;font-style:italic;color:var(--tintaSuave);
+  border-left:2px solid var(--acento);padding:2px 0 2px 10px;
+}
+
+/* ---------- la regla ---------- */
+#regla{
+  margin:54px auto 0;max-width:520px;text-align:center;
+  border:1.5px solid var(--tinta);border-radius:16px;padding:22px 28px;
+}
+#regla .cab{font-size:9px;letter-spacing:.26em;text-transform:uppercase;color:var(--tintaSuave)}
+#regla p{
+  font-family:var(--grot);font-weight:300;font-size:19px;line-height:1.45;margin-top:10px;
+}
+#regla p em{font-style:italic;color:var(--acento)}
+
+footer{
+  margin-top:60px;padding-top:16px;border-top:1px solid var(--hair);
+  display:flex;justify-content:space-between;gap:16px;
+  font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--tintaSuave);
+}
+@media print{body::after{display:none}#hoja{padding:20px}}
+</style>
+</head>
+<body>
+<div id="hoja">
+  <header>
+    <div class="marca"><b>ZONA</b><i>\</i><b>SONA</b></div>
+    <h1>El llenado del lugar</h1>
+    <div class="sub">Cómo un espacio entra al sistema · 5 capas</div>
+  </header>
+
+  <p class="premisa">
+    El lugar no se llena con formularios: se llena en capas, como un expediente clínico.
+    <b>Cada capa deja el sistema operable</b> — la app funciona desde la semana uno y
+    solo cambia la fuente con la que habla. Ninguna capa espera a la siguiente.
+  </p>
+
+  <!-- CAPA 1 -->
+  <div class="capa">
+    <div class="quien">
+      <span class="num">01</span>
+      <span class="semana">Semana 1 · una visita</span>
+      <span class="actor equipo">Equipo SONA</span>
+    </div>
+    <div>
+      <h2>La medición de origen — <em>el acta</em></h2>
+      <ul class="como">
+        <li>Recorrido con el operador: se definen las zonas (salas, patios, accesos) y los puntos de tap</li>
+        <li>Cada zona se mide con el instrumento: las 7 dimensiones, nivel por nivel</li>
+        <li>Se escribe la descripción del espacio y se produce la etiqueta de cada zona</li>
+        <li>Se clasifica el estado base de cada zona: Calmada, Concurrida…</li>
+      </ul>
+      <div class="deja">Deja al sistema: <b>el mapa medido — ZONA ya puede recomendar</b></div>
+      <span class="fuente">La app dice: "Medido por el equipo SONA · 21 jul"</span>
+    </div>
+  </div>
+
+  <!-- CAPA 2 -->
+  <div class="capa">
+    <div class="quien">
+      <span class="num">02</span>
+      <span class="semana">Semana 1 · una sesión</span>
+      <span class="actor operador">Operador del lugar</span>
+    </div>
+    <div>
+      <h2>El contexto estructural — <em>lo que el lugar ya sabe</em></h2>
+      <ul class="como">
+        <li>Horarios, días de entrada libre, calendario de eventos y visitas guiadas</li>
+        <li>Reglas nombrables: "domingo 12–14 h → sala principal: Concurrida"</li>
+        <li>Aforo estimado por franja (boletos, historial propio)</li>
+        <li>Rutas accesibles, descansos y salidas — el esqueleto de las recomendaciones</li>
+      </ul>
+      <div class="deja">Deja al sistema: <b>el patrón horario — el estado varía por hora sin un solo tap</b></div>
+      <span class="fuente">La app dice: "Según el patrón habitual de los martes"</span>
+    </div>
+  </div>
+
+  <!-- CAPA 3 -->
+  <div class="capa">
+    <div class="quien">
+      <span class="num">03</span>
+      <span class="semana">Desde la semana 2 · continuo</span>
+      <span class="actor operador">Personal de sala</span>
+    </div>
+    <div>
+      <h2>El personal como sensor — <em>dos taps por turno</em></h2>
+      <ul class="como">
+        <li>Los custodios ya saben cómo se siente cada sala: se les da un botón, no un dashboard</li>
+        <li>"Esta sala ahora: calmada / media / concurrida" — dos taps, sin texto</li>
+        <li>Corrige el patrón estructural en vivo (el evento que se llenó, la mañana vacía)</li>
+      </ul>
+      <div class="deja">Deja al sistema: <b>señal humana en vivo antes de tener visitantes</b></div>
+      <span class="fuente">La app dice: "Reportado en sala hace 20 min"</span>
+    </div>
+  </div>
+
+  <!-- CAPA 4 -->
+  <div class="capa">
+    <div class="quien">
+      <span class="num">04</span>
+      <span class="semana">Desde el visitante 1 · acumulativo</span>
+      <span class="actor">Visitantes</span>
+    </div>
+    <div>
+      <h2>Los taps — <em>la capa que refina, no la que funda</em></h2>
+      <ul class="como">
+        <li>Cada recorrido corrige la predicción: desvíos, omisiones, pausas</li>
+        <li>Con pocos usuarios ajusta poco; con muchos, mucho — nunca es la única fuente</li>
+        <li>El motor cruza taps contra las capas 1–3 y aprende dónde el acta ya no coincide</li>
+      </ul>
+      <div class="deja">Deja al sistema: <b>evidencia real de cómo se habita el lugar</b></div>
+      <span class="fuente">La app dice: "Ahora mismo, según el flujo en el lugar"</span>
+    </div>
+  </div>
+
+  <!-- CAPA 5 -->
+  <div class="capa">
+    <div class="quien">
+      <span class="num">05</span>
+      <span class="semana">Cada 30 días · ciclo</span>
+      <span class="actor equipo">Equipo SONA</span>
+    </div>
+    <div>
+      <h2>La re-medición — <em>el ciclo clínico</em></h2>
+      <ul class="como">
+        <li>El expediente agregado se compara contra el acta de origen</li>
+        <li>Donde el comportamiento contradice la medición, se vuelve a medir</li>
+        <li>Se actualiza la etiqueta y la prescripción: nueva acta, nuevo ciclo</li>
+      </ul>
+      <div class="deja">Deja al sistema: <b>un lugar que nunca queda desactualizado</b></div>
+      <span class="fuente">La app dice: "Acta actualizada · agosto"</span>
+    </div>
+  </div>
+
+  <!-- la regla -->
+  <div id="regla">
+    <div class="cab">La regla del llenado</div>
+    <p>
+      El sistema nunca miente ni calla:<br>
+      <em>cambia de fuente y lo declara.</em><br>
+      La confianza no viene de fingir tiempo real,<br>
+      sino de decir con qué evidencia hablas.
+    </p>
+  </div>
+
+  <footer>
+    <span>ZONA \ SONA · El llenado del lugar</span>
+    <span>v1 · 23 · 07 · 2026</span>
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SONA · Modo cartel — climas del lugar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&family=Hanken+Grotesk:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   PROTOTIPO — MODO CARTEL (ref: weather app de campos planos).
+   Cada ESTADO del lugar es un mundo de color pleno: fondo
+   saturado de su familia, una letra de la biblioteca de flancos
+   como pictograma gigante, la palabra del estado como héroe y
+   la ficha mínima abajo. El grano de siempre encima.
+   Tres pantallas lado a lado para comparar (Calmado · Activo ·
+   Concurrido). Es una derivada del sistema: la versión
+   atmosférica sigue siendo la voz principal.
+   ============================================================ */
+:root{
+  --mono:"Fragment Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --grot:"Hanken Grotesk", system-ui, sans-serif;
+  --grano:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--mono);
+  display:grid;grid-template-columns:repeat(3,1fr);
+  overflow:hidden;
+}
+@media (max-width:860px){body{grid-template-columns:1fr;overflow:auto;height:auto}}
+
+/* ---------- cada estado: un mundo ---------- */
+.mundo{
+  position:relative;min-height:100vh;
+  background:var(--fondo);color:var(--texto);
+  display:flex;flex-direction:column;
+  padding:clamp(22px,3.5vh,40px) clamp(22px,2.6vw,42px);
+  overflow:hidden;
+}
+.mundo::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:var(--grano);background-size:220px 220px;
+  opacity:.4;mix-blend-mode:overlay;
+}
+
+/* cabecera: fecha/lugar + palabra girada (como la ref) */
+.cab{display:flex;justify-content:space-between;align-items:flex-start;z-index:1}
+.cab .meta{font-size:11px;letter-spacing:.16em;text-transform:uppercase;line-height:1.7}
+.cab .meta b{font-weight:400;background:var(--texto);color:var(--fondo);padding:1px 7px 2px}
+.girada{
+  writing-mode:vertical-rl;
+  font-size:clamp(15px,1.4vw,19px);letter-spacing:.34em;text-transform:uppercase;
+}
+
+/* pictograma: UNA letra de la biblioteca, gigante */
+.picto{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  min-height:0;z-index:1;padding:4% 0;
+}
+.picto svg{width:min(62%,340px);height:auto;color:var(--figura);overflow:visible}
+.picto svg path{fill:currentColor}
+
+/* la palabra del estado: héroe (como el ideograma de la ref) */
+.palabra{
+  font-family:var(--grot);font-weight:200;
+  font-size:clamp(52px,4.6vw,84px);line-height:1;letter-spacing:-.02em;
+  z-index:1;
+}
+
+/* ficha mínima: 3 líneas, como la ref */
+.ficha{
+  margin-top:clamp(14px,2.4vh,26px);padding-top:clamp(14px,2.4vh,22px);
+  border-top:1px solid color-mix(in srgb, var(--texto) 35%, transparent);
+  display:flex;justify-content:space-between;align-items:flex-end;gap:14px;
+  z-index:1;
+}
+.ficha .datos{font-size:clamp(11px,1.05vw,13px);letter-spacing:.1em;line-height:1.9;text-transform:uppercase}
+.ficha .datos b{font-family:var(--grot);font-weight:300;font-size:1.35em;letter-spacing:0;text-transform:none}
+.ficha .indice{
+  font-family:var(--grot);font-weight:200;
+  font-size:clamp(34px,3.2vw,52px);line-height:1;
+}
+.ficha .indice small{font-size:.45em;opacity:.6}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{transition-duration:.01ms !important;animation-duration:.01ms !important}
+}
+</style>
+</head>
+<body>
+<!-- Familias de mood (DESIGN.md) empujadas a campo pleno:
+     fondo saturado de la familia + figura del mismo mundo. -->
+<template id="tpl">
+  <div class="mundo">
+    <div class="cab">
+      <div class="meta"><b>SONA</b> <span class="lugar"></span><br><span class="fecha">23 · 07 · 2026 · 09:00</span></div>
+      <div class="girada palabra-girada"></div>
+    </div>
+    <div class="picto"><svg viewBox="-10 -10 220 220"></svg></div>
+    <div class="palabra"></div>
+    <div class="ficha">
+      <div class="datos"></div>
+      <div class="indice"></div>
+    </div>
+  </div>
+</template>
+
+<script>
+/* ---- los tres mundos: familia de mood a campo pleno ---- */
+const MUNDOS=[
+  {
+    estado:"Calmado", lugar:"Lobby del museo",
+    fondo:"#4d6a8f", figura:"#c9d6e4", texto:"#eef2f6",
+    letra:16,  /* O normal: el reposo redondo */
+    indice:82,
+    datos:[["Luz","alta"],["Pausa","alta"],["Flujo","baja"]],
+  },
+  {
+    estado:"Activo", lugar:"Plaza central",
+    fondo:"#c98a2e", figura:"#f6e3c3", texto:"#fdf6ea",
+    letra:13,  /* S flanco derecho: el gesto que avanza */
+    indice:58,
+    datos:[["Sonido","alta"],["Orientación","alta"],["Pausa","media"]],
+  },
+  {
+    estado:"Concurrido", lugar:"Andén poniente",
+    fondo:"#a4502e", figura:"#f3c9b4", texto:"#fbeee6",
+    letra:11,  /* N ambos flancos: cuerpos que se tocan */
+    indice:34,
+    datos:[["Flujo","alta"],["Materia","alta"],["Pausa","baja"]],
+  },
+];
+
+const rm=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const tpl=document.getElementById("tpl");
+
+MUNDOS.forEach(async (m,idx)=>{
+  const n=tpl.content.cloneNode(true);
+  const mundo=n.querySelector(".mundo");
+  mundo.style.setProperty("--fondo",m.fondo);
+  mundo.style.setProperty("--figura",m.figura);
+  mundo.style.setProperty("--texto",m.texto);
+  n.querySelector(".lugar").textContent=m.lugar.toUpperCase();
+  n.querySelector(".palabra-girada").textContent=m.estado;
+  n.querySelector(".palabra").textContent=m.estado;
+  n.querySelector(".datos").innerHTML=m.datos.map(([k,v])=>`${k} <b>${v}</b>`).join("<br>");
+  n.querySelector(".indice").innerHTML=`${m.indice}<small>%</small>`;
+  document.body.appendChild(n);
+
+  /* pictograma: la letra de la biblioteca, entintada con la figura */
+  const svg=document.body.lastElementChild.querySelector(".picto svg");
+  try{
+    const txt=await (await fetch(`variantes/Recurso ${m.letra}.svg`)).text();
+    const doc=new DOMParser().parseFromString(txt,"image/svg+xml");
+    [...doc.documentElement.querySelectorAll("path")].forEach(p=>{
+      const np=document.createElementNS("http://www.w3.org/2000/svg","path");
+      np.setAttribute("d",p.getAttribute("d"));
+      svg.appendChild(np);
+    });
+  }catch(e){/* sin servidor: el pictograma no carga; el resto vive */}
+});
+</script>
+</body>
+</html>

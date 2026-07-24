@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SONA · Vista pública — presencia del lugar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&family=Hanken+Grotesk:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   PROTOTIPO — VISTA PÚBLICA (instalación / demo a clientes).
+   La etiqueta-documento queda para el export; en pantalla el
+   lugar SE PRESENTA: organismo grande, dato como tipografía
+   protagonista, todo respirando con el mismo reloj de 4 s.
+   Tokens del sistema (mood Equilibrado — verde salvia).
+   ============================================================ */
+:root{
+  /* familia silenciada del estado (las variables las fija el JS
+     según el mood vigente; default: Equilibrado, verde salvia) */
+  --papel:#f0f1ea;
+  --tinta:#2a3430;
+  --tintaSuave:rgba(42,52,48,.62);
+  --claro:#a8bcab;
+  --profundo:#243830;
+  --cieloGrad:linear-gradient(180deg,#93a893 0%,#adbfa9 42%,#cfd6c6 74%,#e6e3d6 100%);
+  --mono:"Fragment Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --grot:"Hanken Grotesk", system-ui, sans-serif;
+  --grano:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--mono);color:var(--tinta);
+  background:var(--cieloGrad);
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:5;
+  background:var(--grano);background-size:220px 220px;opacity:.5;mix-blend-mode:overlay;
+}
+
+#vista{
+  position:relative;height:100vh;
+  display:grid;grid-template-rows:auto 1fr auto;
+  padding:clamp(24px,4vh,48px) clamp(28px,5vw,72px);
+}
+
+/* ---------- cabecera: solo lo que un visitante debe saber ---------- */
+#arriba{display:flex;justify-content:space-between;align-items:baseline;gap:20px}
+#lugar{font-size:clamp(11px,1.1vw,13px);letter-spacing:.18em;text-transform:uppercase}
+#lugar b{font-weight:400;background:var(--tinta);color:var(--papel);padding:2px 8px 3px;margin-right:10px}
+#fecha{font-size:clamp(10px,1vw,12px);letter-spacing:.14em;text-transform:uppercase;color:var(--tintaSuave)}
+
+/* ---------- centro: el logotipo ES la escena ---------- */
+#centro{position:relative;display:flex;align-items:center;justify-content:center;min-height:0}
+/* el SVG maestro inline, entintado con la tinta del mood vía
+   currentColor: nítido a cualquier resolución y sin dependencias */
+/* el logotipo NO respira: quieto; lo único que vive es el cambio
+   de variante de cada letra */
+#logoCaja{width:min(64%,820px);color:var(--profundo)}
+#logoSona{display:block;width:100%;height:auto}
+
+/* ---------- el dato como presencia ---------- */
+#dato{
+  position:absolute;left:0;bottom:clamp(4vh,8vh,10vh);
+  display:flex;flex-direction:column;gap:2px;
+}
+#dato .l{font-size:clamp(9px,.9vw,11px);letter-spacing:.2em;text-transform:uppercase;color:var(--tintaSuave)}
+#estadoPal{
+  font-family:var(--grot);font-weight:200;
+  font-size:clamp(56px,9vw,124px);line-height:.98;letter-spacing:-.02em;
+}
+#indiceLin{
+  display:flex;align-items:baseline;gap:14px;margin-top:6px;
+  font-family:var(--grot);font-weight:300;font-size:clamp(20px,2.2vw,30px);
+}
+#indiceNum{font-variant-numeric:tabular-nums}
+#indiceLin small{font-size:.55em;color:var(--tintaSuave)}
+#indiceLin .desc{font-family:var(--mono);font-size:clamp(10px,1vw,12px);letter-spacing:.1em;text-transform:uppercase;color:var(--tintaSuave)}
+
+/* la respiración del dato: en fase con el loop de 4 s del organismo */
+#estadoPal{animation:aliento 4s ease-in-out infinite}
+@keyframes aliento{0%,100%{opacity:.94}50%{opacity:1}}
+
+/* ---------- descripción del análisis (derecha, voz técnica-poética) ---------- */
+#descripcion{
+  position:absolute;right:0;bottom:clamp(4vh,8vh,10vh);
+  max-width:min(34ch,30vw);text-align:right;
+  display:flex;flex-direction:column;gap:8px;align-items:flex-end;
+}
+#descripcion .l{font-size:clamp(9px,.9vw,11px);letter-spacing:.2em;text-transform:uppercase;color:var(--tintaSuave)}
+#descripcion p{
+  font-size:clamp(10.5px,1.05vw,12.5px);line-height:1.75;letter-spacing:.04em;
+  color:var(--tinta);
+}
+
+/* ---------- pie: las 7 dimensiones como línea de instrumentos ---------- */
+#abajo{
+  display:flex;justify-content:space-between;align-items:flex-end;gap:clamp(10px,2vw,28px);
+  padding-top:18px;
+}
+.d7{display:flex;flex-direction:column;gap:8px;flex:1;min-width:0}
+.d7 .lab{font-size:clamp(8.5px,.85vw,10px);letter-spacing:.16em;text-transform:uppercase;color:var(--tintaSuave);white-space:nowrap}
+.d7 .pal{font-family:var(--grot);font-weight:300;font-size:clamp(15px,1.6vw,21px);line-height:1;text-transform:capitalize}
+/* tres puntos quietos: eco discreto de la palabra (1–3) */
+.d7 .tres{display:flex;gap:5px}
+.d7 .tres i{
+  width:6px;height:6px;border-radius:50%;
+  background:rgba(42,52,48,.16);
+}
+.d7 .tres i.on{background:var(--profundo)}
+
+/* ---------- conmutador de estado (demo): mono caps, discreto ---------- */
+#estados{
+  position:absolute;right:clamp(28px,5vw,72px);top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:10px;z-index:6;
+}
+#estados button{
+  font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+  background:none;border:none;color:var(--tintaSuave);cursor:pointer;
+  text-align:right;padding:4px 0;
+}
+#estados button.on{color:var(--tinta)}
+#estados button.on::after{content:" ●";font-size:8px}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
+}
+@media (max-width:760px){
+  #abajo{flex-wrap:wrap}
+  .d7{flex:1 1 28%}
+  #dato{position:static;margin-top:-4vh}
+}
+</style>
+</head>
+<body>
+<div id="vista">
+  <div id="arriba">
+    <div id="lugar"><b>SONA</b>LOBBY DEL MUSEO · SALA PONIENTE</div>
+    <div id="fecha">ANÁLISIS DEL LUGAR · 23 · 07 · 2026 · 09:00</div>
+  </div>
+
+  <div id="centro">
+    <!-- EL LOGOTIPO SONA: el instrumento en persona (sona-master.svg,
+         R25/módulo 50). En la app real aquí corre la física blanda;
+         el prototipo lo muestra en reposo con su respiración de loop 4 s. -->
+    <!-- Banda s·o·n·a de la biblioteca de flancos (v3): ranuras fijas de
+         200, solape −2; la partitura de 8 compases anima el CARÁCTER de
+         cada costura (loop exacto 4.8 s, crossfade .23 s en sitio). -->
+    <div id="logoCaja" aria-label="Logotipo sona — instrumento del lugar">
+      <svg id="logoSona" viewBox="0 0 794 200" role="img" aria-label="sona"></svg>
+    </div>
+
+    <div id="dato">
+      <span class="l">Estado del lugar</span>
+      <div id="estadoPal">Equilibrado</div>
+      <div id="indiceLin">
+        <span><span id="indiceNum">60</span><small>%</small></span>
+        <span class="desc">Índice del lugar</span>
+      </div>
+    </div>
+
+    <!-- la descripción del análisis: contrapeso del estado -->
+    <div id="descripcion">
+      <span class="l">Descripción del espacio</span>
+      <p>Lobby del museo, jueves 11:48 — luz cenital difusa, murmullo bajo, visitantes en pausa larga. La sala respira despacio; el flujo se ordena solo.</p>
+    </div>
+  </div>
+
+  <div id="abajo" aria-label="Las siete dimensiones"></div>
+
+  <div id="estados" aria-label="Cambiar estado (demo)"></div>
+</div>
+
+<script>
+const rm=matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ============ CADA ESTADO ES UN MUNDO ============
+   La familia silenciada del mood tiñe TODO (cielo, tinta, letras,
+   tempo). Mismo lenguaje atmosférico; el estado transforma el
+   ambiente completo, de golpe. */
+const MUNDOS={
+  Calmado:{
+    cielo:"linear-gradient(180deg,#8fa0b4 0%,#aebbc6 42%,#cfd4d4 74%,#e3e0d8 100%)",
+    tinta:"#2b3440",claro:"#a9bbca",profundo:"#26333f",
+    indice:82,
+    dims:[["Luz",3],["Pausa",3],["Sonido",1],["Visual",2],["Orientación",2],["Flujo",1],["Materia",2]],
+    desc:"Lobby del museo, martes 9:04 — niebla afuera, salas en silencio. La luz entra sola; nadie apura el paso.",
+  },
+  Equilibrado:{
+    cielo:"linear-gradient(180deg,#93a893 0%,#adbfa9 42%,#cfd6c6 74%,#e6e3d6 100%)",
+    tinta:"#2a3430",claro:"#a8bcab",profundo:"#243830",
+    indice:60,
+    dims:[["Luz",2],["Pausa",3],["Sonido",1],["Visual",1],["Orientación",3],["Flujo",2],["Materia",1]],
+    desc:"Lobby del museo, jueves 11:48 — luz cenital difusa, murmullo bajo, visitantes en pausa larga. El flujo se ordena solo.",
+  },
+  Activo:{
+    cielo:"linear-gradient(180deg,#b39a72 0%,#c4ad88 42%,#d8cba9 74%,#e9e2cd 100%)",
+    tinta:"#403626",claro:"#cdb98f",profundo:"#3d3322",
+    indice:58,
+    dims:[["Luz",2],["Pausa",2],["Sonido",3],["Visual",2],["Orientación",3],["Flujo",2],["Materia",2]],
+    desc:"Plaza central, viernes 13:10 — voces cruzadas, pasos decididos. Todo se mueve, pero cada quien sabe a dónde.",
+  },
+  Concurrido:{
+    cielo:"linear-gradient(180deg,#ad7a60 0%,#bf9179 42%,#d4b39c 74%,#e8dcc9 100%)",
+    tinta:"#3f2d22",claro:"#cfa88f",profundo:"#42291c",
+    indice:34,
+    dims:[["Luz",2],["Pausa",1],["Sonido",3],["Visual",3],["Orientación",1],["Flujo",3],["Materia",3]],
+    desc:"Andén poniente, lunes 8:22 — cuerpos y maletas, anuncios encimados. El lugar respira corto.",
+  },
+};
+let estadoActual="Equilibrado";
+
+const PAL=["baja","media","alta"];
+const abajo=document.getElementById("abajo");
+function pintarMundo(nombre){
+  estadoActual=nombre;
+  const m=MUNDOS[nombre],r=document.documentElement.style;
+  r.setProperty("--cieloGrad",m.cielo);
+  r.setProperty("--tinta",m.tinta);
+  r.setProperty("--tintaSuave",m.tinta+"9e");
+  r.setProperty("--claro",m.claro);
+  r.setProperty("--profundo",m.profundo);
+  document.body.style.background=m.cielo;
+  document.getElementById("estadoPal").textContent=nombre;
+  document.querySelector("#descripcion p").textContent=m.desc;
+  abajo.innerHTML="";
+  m.dims.forEach(([lab,n])=>{
+    const d=document.createElement("div");d.className="d7";
+    const puntos=[1,2,3].map(i=>`<i class="${i<=n?"on":""}"></i>`).join("");
+    d.innerHTML=`<span class="lab">${lab}</span><span class="pal">${PAL[n-1]}</span><span class="tres">${puntos}</span>`;
+    abajo.appendChild(d);
+  });
+  /* índice: cuenta hacia el valor del mundo */
+  const origen=parseInt(document.getElementById("indiceNum").textContent)||0;
+  const t0=performance.now(),dur=rm?0:900;
+  (function paso(t){
+    const k=dur?Math.min(1,(t-t0)/dur):1,e=1-Math.pow(1-k,3);
+    document.getElementById("indiceNum").textContent=Math.round(origen+(m.indice-origen)*e);
+    if(k<1)requestAnimationFrame(paso);
+  })(t0);
+  document.querySelectorAll("#estados button").forEach(b=>b.classList.toggle("on",b.textContent===nombre));
+}
+
+/* conmutador (demo) */
+const cont=document.getElementById("estados");
+Object.keys(MUNDOS).forEach(nombre=>{
+  const b=document.createElement("button");
+  b.textContent=nombre;
+  b.addEventListener("click",()=>pintarMundo(nombre));
+  cont.appendChild(b);
+});
+pintarMundo(estadoActual);
+
+/* ============ banda s·o·n·a: biblioteca de flancos + partitura ============ */
+/* ids por letra y estado (DESIGN.md v3): n normal · i flanco izq · d der · a ambos */
+const LETRAS={S:{n:17,i:5,d:13,a:9},O:{n:16,i:8,d:20,a:12},N:{n:7,i:19,d:15,a:11},A:{n:6,i:18,d:14,a:10}};
+const PALABRA=["S","O","N","A"];
+/* partitura de 8 compases (loop 4.8 s): qué costuras están fluidas.
+   Costuras de "sona": 1=S·O, 2=O·N, 3=N·A */
+const svgBanda=document.getElementById("logoSona");
+const ESPACIO=44;            /* aire entre letras: ya no banda pegada */
+const SLOT=200+ESPACIO;
+svgBanda.setAttribute("viewBox",`0 0 ${4*200+3*ESPACIO} 200`);
+
+/* ---- tempo POR ESTADO del lugar (determinista, DISPAREJO) ----
+   Cada letra cambia de variante por su cuenta: compás propio y
+   arranque desfasado (razones enteras sobre el tempo base → el
+   conjunto cierra loop exacto igual). Cambios DE GOLPE, sin fundido. */
+const TEMPO={Calmado:4.8,Equilibrado:3.6,Activo:2.0,Concurrido:1.2}; /* s base */
+/* por letra: [factor de compás, desfase en compases, secuencia de estados] */
+const VOCES=[
+  [1.0, 0.00, ["n","d","a","d"]],   /* S */
+  [1.5, 0.40, ["n","i","d","n"]],   /* O */
+  [0.5, 0.75, ["n","a","i","n"]],   /* N */
+  [2.0, 0.20, ["n","i","a","i"]],   /* A */
+];
+const ESTADO_ACTUAL="Equilibrado";
+
+Promise.all(PALABRA.map(async L=>{
+  const ests={};
+  for(const [est,num] of Object.entries(LETRAS[L])){
+    const txt=await (await fetch(`variantes/Recurso ${num}.svg`)).text();
+    const doc=new DOMParser().parseFromString(txt,"image/svg+xml");
+    ests[est]=[...doc.documentElement.querySelectorAll("path")].map(p=>p.getAttribute("d"));
+  }
+  return ests;
+})).then(letras=>{
+  const NS="http://www.w3.org/2000/svg";
+  /* cada ranura: 4 variantes superpuestas, crossfade por opacidad */
+  const capas=letras.map((ests,i)=>{
+    const g=document.createElementNS(NS,"g");
+    g.setAttribute("transform",`translate(${i*SLOT} 0)`);
+    const porEstado={};
+    for(const [est,ds] of Object.entries(ests)){
+      const ge=document.createElementNS(NS,"g");
+      ge.style.opacity=0; /* sin fundido: el cambio es DE GOLPE */
+      ds.forEach(d=>{
+        const p=document.createElementNS(NS,"path");
+        p.setAttribute("d",d);p.setAttribute("fill","currentColor");
+        ge.appendChild(p);
+      });
+      g.appendChild(ge);porEstado[est]=ge;
+    }
+    svgBanda.appendChild(g);
+    return porEstado;
+  });
+
+  function fijar(i,est){
+    for(const [k,ge] of Object.entries(capas[i]))ge.style.opacity=k===est?1:0;
+  }
+  const vis=[-1,-1,-1,-1];
+  PALABRA.forEach((_,i)=>fijar(i,VOCES[i][2][0]));
+  if(!rm){
+    (function reloj(t){
+      const s=t/1000;
+      const base=TEMPO[estadoActual]||3.6; /* el estado gobierna el tempo */
+      VOCES.forEach(([factor,desfase,seq],i)=>{
+        const dur=base*factor;
+        const c=Math.floor((s/dur+desfase))%seq.length;
+        if(c!==vis[i]){vis[i]=c;fijar(i,seq[c])}
+      });
+      requestAnimationFrame(reloj);
+    })(performance.now());
+  }
+});
+</script>
+</body>
+</html>

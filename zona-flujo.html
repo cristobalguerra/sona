@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZONA · Flujo — Sensory Navigation System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&family=Hanken+Grotesk:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ZONA — Sensory Navigation System · diagrama de flujo
+   Lenguaje del sistema SONA: papel/tinta/bruma, mono caps,
+   hairlines, cajas r10, grano encima.
+   ============================================================ */
+:root{
+  --papel:#f1f0ea;
+  --tinta:#1e2126;
+  --tintaSuave:rgba(30,33,38,.6);
+  --hair:rgba(30,33,38,.14);
+  --bruma:#7d93ab;
+  --niebla:#ccd4da;
+  --acento:#6b84a0;
+  --mono:"Fragment Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --grot:"Hanken Grotesk", system-ui, sans-serif;
+  --grano:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:var(--mono);background:var(--papel);color:var(--tinta);
+  font-size:12px;line-height:1.5;-webkit-font-smoothing:antialiased;
+}
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:9;
+  background:var(--grano);background-size:220px 220px;opacity:.35;mix-blend-mode:overlay;
+}
+
+#hoja{max-width:880px;margin:0 auto;padding:56px 28px 90px}
+
+/* cabecera */
+header{text-align:center;margin-bottom:54px}
+header .marca{font-size:13px;letter-spacing:.14em}
+header .marca b{font-weight:400;background:var(--tinta);color:var(--papel);padding:2px 8px 3px}
+header h1{
+  font-family:var(--grot);font-weight:200;font-size:clamp(30px,4.5vw,44px);
+  letter-spacing:-.01em;margin-top:16px;line-height:1.1;
+}
+header .sub{margin-top:8px;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--tintaSuave)}
+
+/* fases: banda con hairlines */
+.fase{
+  display:flex;align-items:center;gap:16px;
+  margin:44px 0 26px;
+}
+.fase::before,.fase::after{content:"";flex:1;height:1px;background:var(--hair)}
+.fase span{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--tintaSuave);white-space:nowrap}
+
+/* columna de flujo */
+.flujo{display:flex;flex-direction:column;align-items:center}
+
+/* nodos */
+.nodo{
+  border:1px solid var(--tinta);border-radius:10px;
+  padding:13px 22px;text-align:center;max-width:420px;
+  background:var(--papel);position:relative;z-index:1;
+}
+.nodo.tap{
+  background:var(--tinta);color:var(--papel);border-radius:999px;
+  font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+  padding:10px 24px;
+}
+.nodo.tap em{font-style:normal;opacity:.55;margin-right:10px}
+.nodo .t{font-size:12.5px;letter-spacing:.06em}
+.nodo .d{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tintaSuave);margin-top:3px}
+.nodo.motor{
+  border-width:1.5px;border-radius:16px;padding:16px 30px;
+  font-family:var(--grot);font-weight:300;font-size:19px;letter-spacing:0;
+}
+.nodo.suave{border-color:var(--hair);color:var(--tintaSuave)}
+
+/* flecha vertical */
+.baja{width:1px;height:30px;background:var(--tinta);position:relative;opacity:.75}
+.baja::after{
+  content:"";position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+  border:4px solid transparent;border-top:5px solid var(--tinta);border-bottom:0;
+}
+.baja.larga{height:44px}
+
+/* lista colgante (contexto) */
+.cuelga{
+  margin:6px 0 0;display:flex;flex-direction:column;gap:6px;align-items:flex-start;
+}
+.cuelga li{
+  list-style:none;display:flex;align-items:center;gap:10px;
+  font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--tintaSuave);
+}
+.cuelga li::before{content:"";width:18px;height:1px;background:var(--hair)}
+
+/* ramas paralelas */
+.ramas{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:18px;
+  width:100%;max-width:760px;align-items:stretch;
+}
+.rama{display:flex;flex-direction:column;align-items:center;text-align:center}
+.rama .nodo{width:100%;max-width:none;flex:1}
+.rama .preguntas{
+  margin-top:10px;font-size:10px;line-height:1.9;letter-spacing:.08em;
+  color:var(--tintaSuave);font-style:italic;
+}
+/* unión de ramas: tres líneas que caen a una */
+.une{width:100%;max-width:760px;height:34px;position:relative}
+.une svg{position:absolute;inset:0;width:100%;height:100%}
+.une path{stroke:var(--tinta);stroke-width:1;fill:none;opacity:.75}
+
+/* decisión: la caja de recomendaciones */
+.decide{
+  border:1.5px solid var(--tinta);border-radius:16px;
+  padding:20px 28px;max-width:460px;width:100%;
+}
+.decide .cab{font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--tintaSuave);margin-bottom:12px;text-align:center}
+.decide li{
+  list-style:none;padding:8px 0;border-top:1px solid var(--hair);
+  font-size:12px;letter-spacing:.04em;display:flex;gap:12px;align-items:baseline;
+}
+.decide li::before{content:"→";color:var(--acento);font-size:11px}
+
+/* bucle de regreso */
+.bucle{
+  font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--tintaSuave);
+  display:flex;align-items:center;gap:10px;margin:6px 0;
+}
+.bucle::before{content:"↺";font-size:15px;color:var(--acento)}
+
+/* journey: la ficha final */
+.journey{
+  border:1px solid var(--tinta);border-radius:16px;overflow:hidden;
+  max-width:380px;width:100%;
+}
+.journey .cielo{
+  height:56px;background:linear-gradient(180deg,#8fa0b4,#cfd4d4);
+  position:relative;
+}
+.journey .cielo::after{content:"";position:absolute;inset:0;background:var(--grano);background-size:220px;opacity:.4;mix-blend-mode:overlay}
+.journey .cuerpo{padding:16px 22px 18px}
+.journey .cab{font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--tintaSuave)}
+.journey li{
+  list-style:none;padding:7px 0;border-top:1px solid var(--hair);
+  display:flex;justify-content:space-between;gap:14px;
+  font-size:11px;letter-spacing:.06em;
+}
+.journey li:first-of-type{border-top:0;margin-top:8px}
+.journey li b{font-family:var(--grot);font-weight:300;font-size:13px;letter-spacing:0}
+
+/* sello de privacidad */
+.sello{
+  text-align:center;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--tintaSuave);max-width:300px;line-height:2;
+}
+.sello b{font-weight:400;color:var(--tinta);border-bottom:1px solid var(--hair)}
+
+footer{
+  margin-top:70px;padding-top:18px;border-top:1px solid var(--hair);
+  display:flex;justify-content:space-between;gap:16px;
+  font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--tintaSuave);
+}
+
+@media (max-width:640px){
+  .ramas{grid-template-columns:1fr}
+  .une{display:none}
+  .rama+.rama{margin-top:14px}
+}
+@media print{
+  body::after{display:none}
+  #hoja{padding:20px}
+}
+</style>
+</head>
+<body>
+<div id="hoja">
+  <header>
+    <div class="marca"><b>ZONA</b></div>
+    <h1>Sensory Navigation System</h1>
+    <div class="sub">Flujo de sesión · del primer tap al sensory journey</div>
+  </header>
+
+  <!-- ============ ENTRADA ============ -->
+  <div class="fase"><span>Entrada</span></div>
+  <div class="flujo">
+    <div class="nodo tap"><em>Tap 1</em>Entrada al espacio</div>
+    <div class="baja"></div>
+    <div class="nodo"><div class="t">Crear Session ID anónimo</div></div>
+    <div class="baja"></div>
+    <div class="nodo">
+      <div class="t">Detectar contexto inicial</div>
+      <ul class="cuelga">
+        <li>Hora del día</li>
+        <li>Tipo de espacio</li>
+        <li>Idioma</li>
+        <li>Accesibilidad</li>
+      </ul>
+    </div>
+    <div class="baja"></div>
+    <div class="nodo"><div class="t">Mostrar perfil sensorial inicial</div></div>
+  </div>
+
+  <!-- ============ RECORRIDO ============ -->
+  <div class="fase"><span>Recorrido</span></div>
+  <div class="flujo">
+    <div class="ramas">
+      <div class="rama">
+        <div class="nodo tap"><em>Tap 2</em>Punto A</div>
+        <div class="baja"></div>
+        <div class="nodo suave"><div class="t">Registrar visita</div></div>
+      </div>
+      <div class="rama">
+        <div class="nodo tap"><em>Tap 3</em>Punto B</div>
+        <div class="baja"></div>
+        <div class="nodo suave"><div class="t">Registrar visita</div></div>
+      </div>
+      <div class="rama">
+        <div class="nodo tap"><em>Tap 4</em>Punto C</div>
+        <div class="baja"></div>
+        <div class="nodo suave"><div class="t">Registrar visita</div></div>
+      </div>
+    </div>
+    <div class="une">
+      <svg viewBox="0 0 760 34" preserveAspectRatio="none">
+        <path d="M127 0 V10 Q127 22 200 22 H380 M633 0 V10 Q633 22 560 22 H380 M380 0 V34"/>
+      </svg>
+    </div>
+    <div class="nodo motor">Motor de interpretación</div>
+    <div class="baja"></div>
+    <div class="ramas">
+      <div class="rama">
+        <div class="nodo suave"><div class="t">Detecta patrones</div></div>
+        <div class="preguntas">¿Mucho ruido?<br>¿Demasiada gente?</div>
+      </div>
+      <div class="rama">
+        <div class="nodo suave"><div class="t">Cruza variables</div></div>
+        <div class="preguntas">¿Mucho brillo?<br>¿Alta vibración?</div>
+      </div>
+      <div class="rama">
+        <div class="nodo suave"><div class="t">Aprende la ruta</div></div>
+        <div class="preguntas">¿Muchos desvíos?<br>¿Puntos omitidos?</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ DECISIÓN ============ -->
+  <div class="fase"><span>Decisión</span></div>
+  <div class="flujo">
+    <div class="decide">
+      <div class="cab">Según el historial del usuario</div>
+      <ul>
+        <li>Recomendar una ruta tranquila</li>
+        <li>Recomendar una salida</li>
+        <li>Recomendar un descanso</li>
+        <li>Evitar zonas saturadas</li>
+        <li>Mostrar el siguiente punto ideal</li>
+        <li>Cambiar el modo de navegación</li>
+      </ul>
+    </div>
+    <div class="baja"></div>
+    <div class="nodo"><div class="t">El usuario continúa</div></div>
+    <div class="baja"></div>
+    <div class="bucle">Nuevo tap → nueva decisión</div>
+  </div>
+
+  <!-- ============ CIERRE ============ -->
+  <div class="fase"><span>Cierre</span></div>
+  <div class="flujo">
+    <div class="nodo tap"><em>Tap final</em>Fin del recorrido</div>
+    <div class="baja larga"></div>
+    <div class="journey">
+      <div class="cielo"></div>
+      <div class="cuerpo">
+        <div class="cab">Sensory Journey</div>
+        <ul>
+          <li>Perfil visual <b>—</b></li>
+          <li>Nivel de estrés <b>bajo</b></li>
+          <li>Preferencias <b>pausa · luz</b></li>
+          <li>Ruta realizada <b>A → B → C</b></li>
+          <li>Tiempo recorrido <b>47 min</b></li>
+          <li>Espacios favoritos <b>2</b></li>
+        </ul>
+      </div>
+    </div>
+    <div class="baja larga"></div>
+    <div class="sello">
+      Se guarda únicamente el <b>Session ID</b><br>sin datos personales
+    </div>
+  </div>
+
+  <footer>
+    <span>ZONA · Sensory Navigation System</span>
+    <span>Flujo v1 · 23 · 07 · 2026</span>
+  </footer>
+</div>
+</body>
+</html>

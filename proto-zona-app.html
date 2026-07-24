@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZONA · Preview de la app — quién decide qué</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&family=Hanken+Grotesk:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ZONA — preview de app (4 momentos del visitante + vista del lugar)
+   Regla dibujada en cada pantalla:
+   · el MOTOR propone   · el VISITANTE decide   · el LUGAR solo lee
+   Lenguaje SONA: papel/tinta/bruma, mono + Hanken, grano.
+   ============================================================ */
+:root{
+  --papel:#f1f0ea;
+  --tinta:#1e2126;
+  --tintaSuave:rgba(30,33,38,.6);
+  --hair:rgba(30,33,38,.14);
+  --bruma:#7d93ab;
+  --niebla:#ccd4da;
+  --acento:#6b84a0;
+  --cieloCalma:linear-gradient(180deg,#8fa0b4 0%,#aebbc6 46%,#d5d8d2 100%);
+  --cieloConcu:linear-gradient(180deg,#ad7a60 0%,#c39a82 46%,#e2d3bf 100%);
+  --mono:"Fragment Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --grot:"Hanken Grotesk", system-ui, sans-serif;
+  --grano:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:var(--mono);background:var(--papel);color:var(--tinta);
+  font-size:12px;line-height:1.5;-webkit-font-smoothing:antialiased;
+}
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:9;
+  background:var(--grano);background-size:220px 220px;opacity:.3;mix-blend-mode:overlay;
+}
+#hoja{max-width:1180px;margin:0 auto;padding:52px 26px 80px}
+
+header{text-align:center;margin-bottom:16px}
+header .marca{font-size:13px;letter-spacing:.14em}
+header .marca b{font-weight:400;background:var(--tinta);color:var(--papel);padding:2px 8px 3px}
+header h1{font-family:var(--grot);font-weight:200;font-size:clamp(26px,4vw,38px);margin-top:14px;line-height:1.15}
+header .sub{margin-top:6px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--tintaSuave)}
+
+/* leyenda de roles */
+#roles{
+  display:flex;justify-content:center;gap:14px;flex-wrap:wrap;
+  margin:26px 0 46px;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+}
+#roles span{display:flex;align-items:center;gap:7px;color:var(--tintaSuave)}
+#roles i{width:9px;height:9px;border-radius:50%;flex:none}
+.rol-motor{background:var(--acento)}
+.rol-visitante{background:var(--tinta)}
+.rol-lugar{background:var(--niebla);border:1px solid var(--hair)}
+
+/* ---------- fila de teléfonos ---------- */
+#fila{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:22px;align-items:start;
+}
+@media (max-width:1020px){#fila{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){#fila{grid-template-columns:1fr}}
+
+.momento{display:flex;flex-direction:column;gap:14px}
+.tel{
+  border:1.5px solid var(--tinta);border-radius:30px;overflow:hidden;
+  background:var(--papel);aspect-ratio:9/18.6;
+  display:flex;flex-direction:column;position:relative;
+  box-shadow:0 18px 44px rgba(30,33,38,.14);
+}
+.tel .status{
+  display:flex;justify-content:space-between;padding:10px 16px 6px;
+  font-size:8px;letter-spacing:.1em;opacity:.55;
+}
+.pantalla{flex:1;display:flex;flex-direction:column;min-height:0;padding:8px 15px 14px;gap:9px}
+
+/* piezas de UI */
+.appcab{display:flex;justify-content:space-between;align-items:baseline}
+.appcab .z{font-size:10px;letter-spacing:.2em}
+.appcab .z b{font-weight:400;background:var(--tinta);color:var(--papel);padding:1px 5px 2px}
+.appcab .paso{font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--tintaSuave)}
+
+.grande{font-family:var(--grot);font-weight:200;font-size:21px;line-height:1.12;letter-spacing:-.01em}
+.grande em{font-style:normal;color:var(--acento)}
+.micro{font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--tintaSuave);line-height:1.8}
+
+/* tarjeta de estado de sala (SONA dentro de ZONA) */
+.sala{
+  border-radius:14px;overflow:hidden;border:1px solid var(--hair);position:relative;
+}
+.sala .cielo{height:44px;position:relative}
+.sala .cielo.calma{background:var(--cieloCalma)}
+.sala .cielo.concu{background:var(--cieloConcu)}
+.sala .cielo::after{content:"";position:absolute;inset:0;background:var(--grano);background-size:220px;opacity:.4;mix-blend-mode:overlay}
+.sala .datos{padding:8px 11px 10px;display:flex;justify-content:space-between;align-items:baseline}
+.sala .nom{font-size:9px;letter-spacing:.14em;text-transform:uppercase}
+.sala .est{font-family:var(--grot);font-weight:300;font-size:14px}
+
+/* tarjeta del MOTOR: propuesta con porqué + decisión del visitante */
+.propone{
+  border:1px solid var(--acento);border-radius:14px;padding:11px 12px;
+  display:flex;flex-direction:column;gap:8px;position:relative;
+}
+.propone::before{
+  content:"El motor propone";position:absolute;top:-7px;left:10px;
+  background:var(--papel);padding:0 6px;font-size:7.5px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--acento);
+}
+.propone .qp{font-family:var(--grot);font-weight:300;font-size:14.5px;line-height:1.25}
+.propone .por{font-size:8.5px;letter-spacing:.06em;color:var(--tintaSuave);line-height:1.65;font-style:italic}
+.propone .botones{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.propone .botones b{
+  font-weight:400;text-align:center;font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;
+  border:1px solid var(--tinta);border-radius:9px;padding:8px 4px;
+}
+.propone .botones b.si{background:var(--tinta);color:var(--papel)}
+
+/* niveles del perfil inicial */
+.pref{display:flex;flex-direction:column;gap:7px}
+.pref .fila{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pref .fila span{font-size:8.5px;letter-spacing:.14em;text-transform:uppercase}
+.tres{display:flex;gap:4px}
+.tres i{width:26px;height:13px;border-radius:7px;background:rgba(30,33,38,.12)}
+.tres i.on{background:var(--bruma)}
+
+/* mapa esquemático */
+.mapa{
+  flex:1;border:1px solid var(--hair);border-radius:14px;position:relative;min-height:90px;
+  background:
+    linear-gradient(var(--hair) 1px,transparent 1px) 0 0/100% 25%,
+    linear-gradient(90deg,var(--hair) 1px,transparent 1px) 0 0/25% 100%;
+}
+.punto{
+  position:absolute;width:13px;height:13px;border-radius:50%;
+  border:1.5px solid var(--tinta);background:var(--papel);
+  transform:translate(-50%,-50%);
+}
+.punto.hecho{background:var(--tinta)}
+.punto.tu{background:var(--acento);border-color:var(--acento);box-shadow:0 0 0 4px rgba(107,132,160,.25)}
+.punto.evita{border-style:dashed;border-color:#a4502e;background:transparent}
+.ruta{position:absolute;inset:0;width:100%;height:100%}
+.ruta path{fill:none;stroke:var(--acento);stroke-width:1.5;stroke-dasharray:4 4}
+
+/* journey final */
+.jlista li{
+  list-style:none;display:flex;justify-content:space-between;gap:8px;
+  padding:6px 0;border-top:1px solid var(--hair);
+  font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--tintaSuave);
+}
+.jlista li b{font-family:var(--grot);font-weight:300;font-size:12px;color:var(--tinta);letter-spacing:0;text-transform:none}
+
+/* nota bajo cada teléfono: quién hace qué */
+.nota{display:flex;flex-direction:column;gap:6px}
+.nota .tt{font-size:10px;letter-spacing:.18em;text-transform:uppercase}
+.nota li{
+  list-style:none;font-size:9.5px;letter-spacing:.04em;color:var(--tintaSuave);
+  display:flex;gap:8px;align-items:baseline;line-height:1.6;padding:3px 0;
+}
+.nota li i{width:8px;height:8px;border-radius:50%;flex:none;position:relative;top:0}
+
+/* ---------- vista del lugar ---------- */
+#lugar{margin-top:64px}
+#lugar .cab{
+  display:flex;align-items:center;gap:16px;margin-bottom:24px;
+}
+#lugar .cab::before,#lugar .cab::after{content:"";flex:1;height:1px;background:var(--hair)}
+#lugar .cab span{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--tintaSuave)}
+#tablero{
+  border:1px solid var(--tinta);border-radius:18px;padding:22px 26px;
+  display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:26px;align-items:start;
+}
+@media (max-width:860px){#tablero{grid-template-columns:1fr}}
+#tablero h3{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--tintaSuave);margin-bottom:10px;font-weight:400}
+.agr li{
+  list-style:none;display:flex;justify-content:space-between;gap:10px;padding:7px 0;
+  border-top:1px solid var(--hair);font-size:11px;letter-spacing:.04em;
+}
+.agr li b{font-family:var(--grot);font-weight:300;font-size:14px}
+.solo-lee{
+  margin-top:14px;font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--tintaSuave);display:flex;gap:8px;align-items:center;
+}
+.solo-lee i{width:8px;height:8px;border-radius:50%;background:var(--niebla);border:1px solid var(--hair);flex:none}
+
+footer{
+  margin-top:60px;padding-top:16px;border-top:1px solid var(--hair);
+  display:flex;justify-content:space-between;gap:16px;
+  font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--tintaSuave);
+}
+</style>
+</head>
+<body>
+<div id="hoja">
+  <header>
+    <div class="marca"><b>ZONA</b></div>
+    <h1>Preview — quién decide, quién propone, quién solo lee</h1>
+    <div class="sub">Cuatro momentos del visitante · una vista del lugar</div>
+  </header>
+
+  <div id="roles">
+    <span><i class="rol-motor"></i>El motor propone</span>
+    <span><i class="rol-visitante"></i>El visitante decide</span>
+    <span><i class="rol-lugar"></i>El lugar solo lee (agregado y anónimo)</span>
+  </div>
+
+  <div id="fila">
+    <!-- ========== MOMENTO 1: entrada ========== -->
+    <div class="momento">
+      <div class="tel">
+        <div class="status"><span>9:04</span><span>●●●</span></div>
+        <div class="pantalla">
+          <div class="appcab"><span class="z"><b>ZONA</b></span><span class="paso">Tap 1 · Entrada</span></div>
+          <div class="grande">¿Cómo quieres<br>recorrer hoy?</div>
+          <p class="micro">Sesión anónima · #4F2A<br>Museo · martes · 9:04</p>
+          <div class="pref">
+            <div class="fila"><span>Ritmo</span><span class="tres"><i class="on"></i><i class="on"></i><i></i></span></div>
+            <div class="fila"><span>Gente</span><span class="tres"><i class="on"></i><i></i><i></i></span></div>
+            <div class="fila"><span>Sonido</span><span class="tres"><i class="on"></i><i></i><i></i></span></div>
+            <div class="fila"><span>Guía</span><span class="tres"><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+          </div>
+          <div class="propone">
+            <div class="qp">Perfil sugerido: <em>recorrido sereno</em></div>
+            <p class="por">Martes 9 am: el museo amanece Calmado. Puedes cambiarlo cuando quieras.</p>
+            <div class="botones"><b class="si">Empezar así</b><b>Ajustar</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="nota">
+        <div class="tt">01 · La entrada</div>
+        <ul>
+          <li><i class="rol-motor"></i>Propone el perfil desde el contexto (hora, espacio, idioma, accesibilidad)</li>
+          <li><i class="rol-visitante"></i>Decide el perfil — puede aceptar o mover cada nivel</li>
+          <li><i class="rol-lugar"></i>Solo sabe: una sesión más comenzó</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ========== MOMENTO 2: recorrido en calma ========== -->
+    <div class="momento">
+      <div class="tel">
+        <div class="status"><span>9:31</span><span>●●●</span></div>
+        <div class="pantalla">
+          <div class="appcab"><span class="z"><b>ZONA</b></span><span class="paso">Tap 2 · Punto A</span></div>
+          <div class="sala">
+            <div class="cielo calma"></div>
+            <div class="datos"><span class="nom">Sala de grabados</span><span class="est">Calmada</span></div>
+          </div>
+          <div class="mapa">
+            <svg class="ruta" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M22 78 Q30 55 48 52 T78 30"/></svg>
+            <span class="punto hecho" style="left:22%;top:78%"></span>
+            <span class="punto tu" style="left:48%;top:52%"></span>
+            <span class="punto" style="left:78%;top:30%"></span>
+            <span class="punto" style="left:80%;top:72%"></span>
+          </div>
+          <p class="micro">Estás en el punto A · siguiente sugerido: B<br>vas a tu ritmo — sin cronómetro</p>
+        </div>
+      </div>
+      <div class="nota">
+        <div class="tt">02 · El recorrido</div>
+        <ul>
+          <li><i class="rol-visitante"></i>Camina y hace tap donde quiere — el orden es suyo</li>
+          <li><i class="rol-motor"></i>Registra la visita y sugiere el siguiente punto (línea punteada: propuesta, no orden)</li>
+          <li><i class="rol-lugar"></i>Su estado SONA aparece como clima de cada sala</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ========== MOMENTO 3: la intervención ========== -->
+    <div class="momento">
+      <div class="tel">
+        <div class="status"><span>10:12</span><span>●●●</span></div>
+        <div class="pantalla">
+          <div class="appcab"><span class="z"><b>ZONA</b></span><span class="paso">Entre taps · Decisión</span></div>
+          <div class="sala">
+            <div class="cielo concu"></div>
+            <div class="datos"><span class="nom">Sala principal</span><span class="est">Concurrida</span></div>
+          </div>
+          <div class="propone">
+            <div class="qp">¿Prefieres la <em>sala de textiles</em> primero?</div>
+            <p class="por">Porque llevas 40 min sin pausa, omitiste 2 puntos y la sala principal está en su hora más densa. Vuelve a las 11: estará Calmada.</p>
+            <div class="botones"><b class="si">Sí, cambiar</b><b>Seguir igual</b></div>
+          </div>
+          <p class="micro">También puedes: descansar en el patio ·<br>salir por la rampa norte</p>
+        </div>
+      </div>
+      <div class="nota">
+        <div class="tt">03 · La decisión</div>
+        <ul>
+          <li><i class="rol-motor"></i>Detecta el patrón y propone CON el porqué visible — nunca ejecuta solo</li>
+          <li><i class="rol-visitante"></i>Decide: cambiar, seguir igual, descansar o salir — todas son válidas</li>
+          <li><i class="rol-lugar"></i>No ve esta conversación; solo el agregado después</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ========== MOMENTO 4: cierre ========== -->
+    <div class="momento">
+      <div class="tel">
+        <div class="status"><span>10:51</span><span>●●●</span></div>
+        <div class="pantalla">
+          <div class="appcab"><span class="z"><b>ZONA</b></span><span class="paso">Tap final · Cierre</span></div>
+          <div class="grande">Tu <em>Sensory<br>Journey</em></div>
+          <ul class="jlista">
+            <li>Estado dominante <b>Calmado</b></li>
+            <li>Nivel de estrés <b>bajo</b></li>
+            <li>Preferencias <b>pausa · luz</b></li>
+            <li>Ruta <b>A → C → B</b></li>
+            <li>Tiempo <b>47 min</b></li>
+            <li>Favoritos <b>grabados · patio</b></li>
+          </ul>
+          <div class="propone">
+            <div class="qp">¿Guardar como <em>mi perfil</em> para la próxima visita?</div>
+            <div class="botones"><b class="si">Guardar</b><b>Borrar todo</b></div>
+          </div>
+          <p class="micro">Solo Session ID · sin datos personales</p>
+        </div>
+      </div>
+      <div class="nota">
+        <div class="tt">04 · El cierre</div>
+        <ul>
+          <li><i class="rol-motor"></i>Construye el journey y lo ofrece — es del visitante, no del sistema</li>
+          <li><i class="rol-visitante"></i>Decide si el perfil persiste o se borra — el olvido es un derecho, no un ajuste</li>
+          <li><i class="rol-lugar"></i>Recibe el rastro anónimo ya agregado al expediente</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== LA VISTA DEL LUGAR ========== -->
+  <div id="lugar">
+    <div class="cab"><span>Lo único que ve el lugar</span></div>
+    <div id="tablero">
+      <div>
+        <h3>Expediente del día · agregado</h3>
+        <ul class="agr">
+          <li>Sesiones <b>112</b></li>
+          <li>Estado dominante <b>Equilibrado</b></li>
+          <li>Zona crítica <b>Sala principal · 10–11 h</b></li>
+          <li>Punto más omitido <b>Mezzanine</b></li>
+          <li>Pausa promedio <b>baja</b></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Diagnóstico ZONA</h3>
+        <ul class="agr">
+          <li>Sonido <b>alta</b></li>
+          <li>Flujo <b>alta</b></li>
+          <li>Pausa <b>baja</b></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Prescripción SONA</h3>
+        <ul class="agr">
+          <li>Abrir ruta por grabados <b>10–11 h</b></li>
+          <li>Señalizar el patio como descanso <b>hoy</b></li>
+          <li>Declarar sala principal <b>Concurrida</b></li>
+        </ul>
+      </div>
+    </div>
+    <p class="solo-lee"><i></i>El lugar nunca ve personas ni sesiones individuales: lee el expediente agregado y aplica la prescripción. Las decisiones del recorrido son siempre del visitante.</p>
+  </div>
+
+  <footer>
+    <span>ZONA · Preview de app v1</span>
+    <span>23 · 07 · 2026</span>
+  </footer>
+</div>
+</body>
+</html>

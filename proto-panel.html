@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SONA · Prototipo panel — instrumentos sobre el cielo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&family=Hanken+Grotesk:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   PROTOTIPO: el panel hereda la materialidad de la etiqueta.
+   Mismos tokens del sistema (DESIGN.md) — cero matices nuevos.
+   ============================================================ */
+:root{
+  --papel:#f1f0ea;
+  --tinta:#1e2126;
+  --tintaLogo:#3d4e60;
+  --hair:rgba(30,33,38,.14);
+  --hair-soft:rgba(30,33,38,.07);
+  --acento:#6b84a0;
+  --bruma:#7d93ab;
+  --niebla:#ccd4da;
+  --cieloGrad:linear-gradient(180deg,#8fa0b4 0%,#aebbc6 42%,#cfd4d4 74%,#e3e0d8 100%);
+  --mono:"Fragment Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --grot:"Hanken Grotesk", system-ui, sans-serif;
+  --grano:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+  --sombraTarjeta:0 24px 60px rgba(30,33,38,.18);
+  --rTarjeta:24px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--mono);
+  color:var(--tinta);
+  font-size:12px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  background:var(--cieloGrad);
+  overflow:hidden;
+}
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:var(--grano);background-size:220px 220px;
+  opacity:.5;mix-blend-mode:overlay;
+}
+
+/* ---------- lienzo: todo flota SOBRE el cielo ---------- */
+#lienzo{position:relative;height:100vh;display:grid;grid-template-columns:1fr 400px;gap:0}
+
+/* marcas de registro (se conservan) */
+.marca{position:absolute;width:14px;height:14px;opacity:.35;pointer-events:none;z-index:2}
+.marca::before,.marca::after{content:"";position:absolute;background:var(--tinta)}
+.marca::before{left:50%;top:0;width:1px;height:100%}
+.marca::after{top:50%;left:0;height:1px;width:100%}
+.marca.tl{top:16px;left:16px}.marca.bl{bottom:16px;left:16px}
+
+/* cabecera mínima, flotando en el cielo (sin barra) */
+#cab{
+  position:absolute;top:22px;left:26px;z-index:3;
+  display:flex;align-items:baseline;gap:12px;
+}
+#cab h1{font-size:13px;font-weight:400;letter-spacing:.14em}
+#cab h1 b{font-weight:400;background:var(--tinta);color:var(--papel);padding:1px 7px 2px;margin-right:8px}
+#cab .sub{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.55}
+
+/* ---------- escenario (placeholder del organismo) ---------- */
+#escenario{position:relative;display:flex;align-items:center;justify-content:center;min-width:0}
+#organismo{width:min(62%,560px);overflow:visible}
+
+/* ---------- columna de instrumentos: tarjetas de papel ---------- */
+#instrumentos{
+  position:relative;z-index:2;
+  padding:22px 26px 22px 0;
+  display:flex;flex-direction:column;gap:14px;
+  overflow-y:auto;overscroll-behavior:contain;
+}
+.tarjeta{
+  background:var(--papel);
+  border-radius:var(--rTarjeta);
+  box-shadow:var(--sombraTarjeta);
+  padding:20px 22px;
+  flex:none;
+}
+.tarjeta h2{
+  font-size:10px;font-weight:400;letter-spacing:.18em;text-transform:uppercase;
+  display:flex;justify-content:space-between;align-items:baseline;opacity:.85;
+}
+.tarjeta h2 .num{opacity:.4}
+
+/* ---------- STAT TILE: índice + estado, siempre visible ---------- */
+#tileIndice{display:grid;grid-template-columns:1fr auto;align-items:center;gap:14px}
+#tileIndice .bloq .l{font-size:9px;letter-spacing:.16em;text-transform:uppercase;opacity:.72;margin-bottom:2px}
+#indiceNum{
+  font-family:var(--grot);font-weight:200;font-size:64px;line-height:.95;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;
+}
+#indiceNum small{font-size:24px;font-weight:300;opacity:.4;margin-left:2px}
+#estadoPal{font-family:var(--grot);font-weight:300;font-size:26px;line-height:1.05;text-align:right}
+#tileIndice .barra{
+  grid-column:1/-1;position:relative;height:14px;border-radius:7px;overflow:hidden;
+  background:linear-gradient(90deg,var(--niebla),var(--bruma));
+}
+#tileIndice .barra::after{content:"";position:absolute;inset:0;background:var(--grano);background-size:220px;opacity:.3;mix-blend-mode:overlay}
+#tileIndice .tapa{
+  position:absolute;top:0;bottom:0;right:0;
+  background:color-mix(in srgb, var(--papel) 82%, transparent);
+  transition:width .7s cubic-bezier(.3,.9,.3,1);
+}
+
+/* ---------- HÉROE: las 7 dimensiones como instrumentos ---------- */
+.dim{display:grid;grid-template-columns:74px 1fr 76px;align-items:center;gap:12px;padding:9px 0}
+.dim + .dim{border-top:1px solid var(--hair-soft)}
+.dim .lab{font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;opacity:.8}
+.dim .pal{
+  font-family:var(--grot);font-weight:300;font-size:19px;line-height:1;text-align:right;
+  text-transform:capitalize;
+}
+/* medidor con cuerpo: 5 celdas altas, rampa como relleno */
+.med{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;height:44px}
+.med b{
+  border-radius:12px;cursor:pointer;border:none;position:relative;
+  transition:transform .38s cubic-bezier(.34,1.56,.5,1), opacity .25s, filter .15s;
+}
+.med b:hover{filter:brightness(.94)}
+.med b:active{transform:scaleY(.9)}
+.med b.on{transform:scaleY(1)}
+.med b.off{opacity:.17}
+.med b:focus-visible{outline:2px solid var(--acento);outline-offset:2px}
+/* onda al fijar: la celda elegida respira una vez (determinista, .5s) */
+.med b.pulso{animation:pulsoMed .5s cubic-bezier(.34,1.56,.5,1)}
+@keyframes pulsoMed{0%{transform:scaleY(1)}35%{transform:scaleY(1.18)}100%{transform:scaleY(1)}}
+
+/* ---------- tarjetas menores ---------- */
+textarea{
+  width:100%;font-family:var(--mono);font-size:11px;line-height:1.6;letter-spacing:.04em;
+  border:1px solid var(--hair);background:transparent;color:var(--tinta);
+  border-radius:14px;padding:11px 13px;resize:vertical;outline:none;min-height:64px;
+  transition:border-color .15s;
+}
+textarea:focus{border-color:var(--acento)}
+textarea::placeholder{color:var(--tinta);opacity:.35}
+
+.acciones{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+button.b{
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  background:transparent;color:var(--tinta);border:1px solid var(--tinta);
+  border-radius:14px;min-height:44px;padding:0 14px;cursor:pointer;
+  transition:background .15s,color .15s,transform .2s cubic-bezier(.34,1.56,.5,1);
+}
+button.b:hover{background:var(--tinta);color:var(--papel)}
+button.b:active{transform:scale(.965);background:var(--acento);border-color:var(--acento);color:var(--papel)}
+button.b.lleno{background:var(--tinta);color:var(--papel)}
+button.b.lleno:hover{background:var(--acento);border-color:var(--acento)}
+
+.pie{margin-top:12px;font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;opacity:.6;
+  display:flex;justify-content:space-between;gap:10px}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{transition-duration:.01ms !important;animation-duration:.01ms !important}
+}
+@media (max-width:960px){
+  body{overflow:auto}
+  #lienzo{grid-template-columns:1fr;height:auto}
+  #escenario{min-height:46vh}
+  #instrumentos{padding:0 18px 24px}
+}
+</style>
+</head>
+<body>
+<div id="lienzo">
+  <span class="marca tl"></span><span class="marca bl"></span>
+  <div id="cab">
+    <h1><b>SONA</b>SISTEMA VIVO</h1>
+    <span class="sub">prototipo · instrumentos sobre el cielo</span>
+  </div>
+
+  <div id="escenario">
+    <!-- placeholder del organismo: 3 orbes respirando en loop exacto de 4 s.
+         (En la app real aquí vive el metaball; esto solo da contexto.) -->
+    <svg id="organismo" viewBox="0 0 700 310" aria-label="Organismo sona (placeholder)">
+      <defs>
+        <radialGradient id="gOrbe" cx="50%" cy="34%" r="80%">
+          <stop offset="0" stop-color="#93a7ba"/>
+          <stop offset="1" stop-color="#1f2c39"/>
+        </radialGradient>
+        <radialGradient id="gSom">
+          <stop offset="0" stop-color="#1f2c39" stop-opacity=".22"/>
+          <stop offset="1" stop-color="#1f2c39" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <g id="sombras"></g>
+      <g id="orbes"></g>
+    </svg>
+  </div>
+
+  <div id="instrumentos">
+    <!-- STAT TILE -->
+    <div class="tarjeta" id="tileIndice">
+      <div class="bloq">
+        <div class="l">Índice del lugar</div>
+        <div id="indiceNum">—<small>%</small></div>
+      </div>
+      <div class="bloq" style="align-self:start">
+        <div class="l" style="text-align:right">Estado</div>
+        <div id="estadoPal">—</div>
+      </div>
+      <div class="barra"><span class="tapa" id="tapa"></span></div>
+    </div>
+
+    <!-- HÉROE: 7 dimensiones -->
+    <div class="tarjeta">
+      <h2>Medición <span class="num">7 dimensiones</span></h2>
+      <div id="dims"></div>
+    </div>
+
+    <!-- descripción -->
+    <div class="tarjeta">
+      <h2>Descripción del espacio</h2>
+      <textarea placeholder="Lobby del museo, martes 9 am. Niebla afuera, salas en silencio…" style="margin-top:11px"></textarea>
+    </div>
+
+    <!-- exportar -->
+    <div class="tarjeta">
+      <h2>Exportar</h2>
+      <div class="acciones">
+        <button class="b lleno">Etiqueta PNG</button>
+        <button class="b">SVG</button>
+      </div>
+      <div class="pie"><span id="firma">luz·3 pau·4 son·2 vis·3 ori·4 flu·2 mat·3</span><span>loop 4 s</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============ datos ============ */
+const DIMS=[["luz","Luz"],["pausa","Pausa"],["sonido","Sonido"],["visual","Visual"],["orientacion","Orientación"],["flujo","Flujo"],["materia","Materia"]];
+const PALABRAS=["mínima","baja","media","alta","plena"];
+const niveles={luz:3,pausa:4,sonido:2,visual:3,orientacion:4,flujo:2,materia:3};
+const RAMPA=["#d6dbdf","#b8c1c9","#9aa8b6","#8b9dae","#7d93ab"]; // niebla→bruma
+const MOODS=[[80,"Calmado"],[62,"Equilibrado"],[45,"Activo"],[0,"Ajetreado"]];
+const rm=matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ============ medidores ============ */
+const cont=document.getElementById("dims");
+DIMS.forEach(([id,lab])=>{
+  const fila=document.createElement("div");fila.className="dim";
+  fila.innerHTML=`<span class="lab">${lab}</span><div class="med" role="radiogroup" aria-label="${lab}"></div><span class="pal" id="pal-${id}"></span>`;
+  const med=fila.querySelector(".med");
+  for(let n=1;n<=5;n++){
+    const c=document.createElement("b");
+    c.style.background=RAMPA[n-1];
+    c.setAttribute("role","radio");c.tabIndex=0;
+    c.setAttribute("aria-label",`${lab}: ${PALABRAS[n-1]}`);
+    const fijar=()=>{niveles[id]=n;pintar(id);c.classList.remove("pulso");void c.offsetWidth;if(!rm)c.classList.add("pulso");actualizarIndice()};
+    c.addEventListener("click",fijar);
+    c.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();fijar()}});
+    med.appendChild(c);
+  }
+  cont.appendChild(fila);
+  pintar(id);
+});
+function pintar(id){
+  const n=niveles[id];
+  const fila=document.getElementById("pal-"+id).parentElement;
+  fila.querySelectorAll(".med b").forEach((c,i)=>{
+    c.classList.toggle("off",i>=n);c.classList.toggle("on",i<n);
+    c.setAttribute("aria-checked",i===n-1);
+  });
+  document.getElementById("pal-"+id).textContent=PALABRAS[n-1];
+}
+
+/* ============ índice: cuenta hacia su valor ============ */
+let indiceVis=0;
+function actualizarIndice(){
+  const vals=Object.values(niveles);
+  const idx=Math.round(vals.reduce((a,b)=>a+b,0)/(vals.length*5)*100);
+  const destino=idx, origen=indiceVis, t0=performance.now(), dur=rm?0:600;
+  function paso(t){
+    const k=dur?Math.min(1,(t-t0)/dur):1, e=1-Math.pow(1-k,3);
+    indiceVis=Math.round(origen+(destino-origen)*e);
+    document.getElementById("indiceNum").innerHTML=indiceVis+"<small>%</small>";
+    if(k<1)requestAnimationFrame(paso);
+  }
+  requestAnimationFrame(paso);
+  document.getElementById("tapa").style.width=(100-idx)+"%";
+  document.getElementById("estadoPal").textContent=MOODS.find(([min])=>idx>=min)[1];
+  document.getElementById("firma").textContent=DIMS.map(([id])=>id.slice(0,3)+"·"+niveles[id]).join(" ");
+}
+actualizarIndice();
+
+/* ============ organismo placeholder: 3 orbes, loop exacto 4 s ============ */
+const NS="http://www.w3.org/2000/svg";
+const gO=document.getElementById("orbes"),gS=document.getElementById("sombras");
+const orbes=[];
+for(let i=0;i<3;i++){
+  const s=document.createElementNS(NS,"ellipse");
+  s.setAttribute("fill","url(#gSom)");gS.appendChild(s);
+  const c=document.createElementNS(NS,"circle");
+  c.setAttribute("r",44);c.setAttribute("fill","url(#gOrbe)");gO.appendChild(c);
+  orbes.push({c,s});
+}
+function animar(t){
+  const T=(t/1000)%4/4*Math.PI*2; // 1 vuelta / 4 s
+  orbes.forEach((o,i)=>{
+    const a=T+i*(Math.PI*2/3);
+    const x=350+Math.cos(a)*120, y=170+Math.sin(a)*120*0.32;
+    const r=44*(1+0.05*Math.sin(2*T));
+    o.c.setAttribute("cx",x);o.c.setAttribute("cy",y);o.c.setAttribute("r",r);
+    o.s.setAttribute("cx",x);o.s.setAttribute("cy",274);
+    o.s.setAttribute("rx",r*(0.55+0.4*((Math.sin(a)+1)/2)));o.s.setAttribute("ry",r*0.2);
+  });
+  if(!rm)requestAnimationFrame(animar);
+}
+requestAnimationFrame(animar);
+</script>
+</body>
+</html>

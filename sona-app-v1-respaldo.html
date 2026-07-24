@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SONA · La app</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&family=Hanken+Grotesk:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   SONA — LA APP (v1)
+   SONA es la puerta: el lugar se presenta (mood, logotipo vivo,
+   estado) y el tap desbloquea el recorrido SONA.
+   El mood vigente tiñe TODA la app en todo momento.
+   ============================================================ */
+:root{
+  /* tokens polares del mood vigente — los fija el JS */
+  --papel:#f0f1ea;
+  --tinta:#2a3430;
+  --tintaSuave:rgba(42,52,48,.62);
+  --claro:#a8bcab;
+  --profundo:#243830;
+  --cielo:linear-gradient(180deg,#93a893 0%,#adbfa9 42%,#cfd6c6 74%,#e6e3d6 100%);
+  --hair:rgba(42,52,48,.16);
+  --mono:"Fragment Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --grot:"Hanken Grotesk", system-ui, sans-serif;
+  --grano:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--mono);color:var(--tinta);
+  background:#141619;
+  display:flex;align-items:center;justify-content:center;
+  -webkit-font-smoothing:antialiased;font-size:12px;line-height:1.5;
+}
+
+/* la app: móvil a pantalla completa; en escritorio, columna centrada */
+#app{
+  position:relative;width:100%;height:100dvh;overflow:hidden;
+  background:var(--cielo);
+  transition:background .6s ease;
+}
+@media (min-width:520px){
+  #app{width:410px;height:min(860px,94vh);border-radius:34px;box-shadow:0 30px 90px rgba(0,0,0,.5)}
+}
+#app::after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:40;
+  background:var(--grano);background-size:220px 220px;opacity:.45;mix-blend-mode:overlay;
+}
+
+/* ---------- pantallas ---------- */
+.pant{
+  position:absolute;inset:0;z-index:1;
+  padding:calc(18px + env(safe-area-inset-top)) 22px calc(22px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;gap:14px;
+  opacity:0;pointer-events:none;transition:opacity .45s ease;
+  overflow-y:auto;
+}
+.pant.viva{opacity:1;pointer-events:auto;z-index:2}
+/* pantallas de "papel" (operación): velo de papel sobre el cielo */
+.pant.papel{background:color-mix(in srgb, var(--papel) 88%, transparent)}
+
+.cab{display:flex;justify-content:space-between;align-items:baseline;flex:none}
+.cab .z{font-size:11px;letter-spacing:.2em}
+.cab .z b{font-weight:400;background:var(--tinta);color:var(--papel);padding:2px 7px 3px}
+.cab .paso{font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--tintaSuave)}
+
+.grande{font-family:var(--grot);font-weight:200;font-size:29px;line-height:1.12;letter-spacing:-.01em}
+.grande em{font-style:normal;color:var(--profundo);opacity:.75}
+.micro{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--tintaSuave);line-height:1.9}
+
+.bt{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+  border:1px solid var(--tinta);border-radius:14px;background:transparent;color:var(--tinta);
+  min-height:50px;padding:0 18px;cursor:pointer;width:100%;
+  transition:transform .18s cubic-bezier(.34,1.56,.5,1),background .15s,color .15s;
+}
+.bt:active{transform:scale(.965)}
+.bt.lleno{background:var(--tinta);color:var(--papel)}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ============ P0 · SONA: el lugar se presenta ============ */
+#p0{justify-content:space-between}
+#p0 .arriba{display:flex;justify-content:space-between;align-items:baseline}
+#p0 .lugar{font-size:10px;letter-spacing:.18em;text-transform:uppercase}
+#p0 .lugar b{font-weight:400;background:var(--tinta);color:var(--papel);padding:2px 7px 3px;margin-right:8px}
+#p0 .fecha{font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--tintaSuave)}
+
+#bandaCaja{flex:1;display:flex;align-items:center;justify-content:center;min-height:0}
+#banda{width:88%;max-width:340px;color:var(--profundo)}
+#banda svg{display:block;width:100%;height:auto}
+
+#p0 .dato{display:flex;flex-direction:column;gap:2px}
+#p0 .dato .l{font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--tintaSuave)}
+#estadoPal{font-family:var(--grot);font-weight:200;font-size:52px;line-height:1;letter-spacing:-.02em}
+#indiceLin{display:flex;align-items:baseline;gap:10px;margin-top:4px;font-family:var(--grot);font-weight:300;font-size:19px}
+#indiceLin small{font-size:.55em;color:var(--tintaSuave)}
+#indiceLin .desc{font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--tintaSuave)}
+
+#entrar{
+  display:flex;align-items:center;gap:14px;cursor:pointer;user-select:none;
+  -webkit-tap-highlight-color:transparent;border:none;background:none;color:var(--tinta);
+  font-family:var(--mono);padding:6px 0;text-align:left;
+}
+#entrar .aro{
+  width:58px;height:58px;border-radius:50%;border:1.5px solid var(--tinta);flex:none;
+  display:flex;align-items:center;justify-content:center;position:relative;
+  font-family:var(--grot);font-weight:200;font-size:19px;
+}
+#entrar .aro::before{
+  content:"";position:absolute;inset:-9px;border-radius:50%;
+  border:1px solid var(--hair);animation:onda 2.4s ease-out infinite;
+}
+@keyframes onda{0%{transform:scale(.85);opacity:1}100%{transform:scale(1.3);opacity:0}}
+#entrar .tx{font-size:10px;letter-spacing:.18em;text-transform:uppercase;line-height:1.8}
+#entrar .tx i{display:block;font-style:normal;color:var(--tintaSuave);font-size:8.5px;letter-spacing:.12em}
+
+/* ============ P1 · perfil ============ */
+.pref{display:flex;flex-direction:column;gap:12px}
+.pref .fila{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.pref .fila>span{font-size:10px;letter-spacing:.16em;text-transform:uppercase}
+.tres{display:flex;gap:5px}
+.tres i{width:34px;height:17px;border-radius:9px;background:color-mix(in srgb, var(--tinta) 12%, transparent);cursor:pointer;transition:background .15s,transform .3s cubic-bezier(.34,1.56,.5,1)}
+.tres i.on{background:var(--profundo)}
+.tres i:active{transform:scaleY(1.25)}
+
+.propone{
+  border:1px solid var(--profundo);border-radius:16px;padding:14px 15px;
+  display:flex;flex-direction:column;gap:10px;position:relative;flex:none;
+  background:color-mix(in srgb, var(--papel) 70%, transparent);
+}
+.propone::before{
+  content:"El motor propone";position:absolute;top:-8px;left:12px;
+  background:var(--papel);padding:0 7px;font-size:8px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--profundo);
+}
+.propone .qp{font-family:var(--grot);font-weight:300;font-size:16.5px;line-height:1.3}
+.propone .qp em{font-style:normal;color:var(--profundo)}
+.propone .por{font-size:9px;letter-spacing:.05em;color:var(--tintaSuave);line-height:1.7;font-style:italic}
+
+/* ============ P2 · recorrido ============ */
+.sala{border-radius:16px;overflow:hidden;border:1px solid var(--hair);flex:none;background:var(--papel)}
+.sala .cielo{height:58px;position:relative;transition:background .5s}
+.sala .cielo::after{content:"";position:absolute;inset:0;background:var(--grano);background-size:220px;opacity:.45;mix-blend-mode:overlay}
+.sala .datos{padding:9px 13px 11px;display:flex;justify-content:space-between;align-items:baseline}
+.sala .nom{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase}
+.sala .est{font-family:var(--grot);font-weight:300;font-size:16px}
+
+.mapa{
+  flex:1;border:1px solid var(--hair);border-radius:16px;position:relative;min-height:200px;
+  background:
+    color-mix(in srgb, var(--papel) 55%, transparent);
+}
+.mapa::before{
+  content:"";position:absolute;inset:0;border-radius:16px;
+  background:
+    linear-gradient(var(--hair) 1px,transparent 1px) 0 0/100% 20%,
+    linear-gradient(90deg,var(--hair) 1px,transparent 1px) 0 0/20% 100%;
+}
+.zona-n{
+  position:absolute;font-size:7.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--tintaSuave);
+  transform:translate(-50%,-50%);pointer-events:none;white-space:nowrap;
+}
+.pto{
+  position:absolute;width:46px;height:46px;border-radius:50%;
+  transform:translate(-50%,-50%);cursor:pointer;border:none;background:transparent;
+  display:flex;align-items:center;justify-content:center;
+  -webkit-tap-highlight-color:transparent;
+}
+.pto i{
+  width:16px;height:16px;border-radius:50%;border:1.5px solid var(--tinta);background:var(--papel);
+  transition:transform .3s cubic-bezier(.34,1.56,.5,1),background .2s;
+}
+.pto.hecho i{background:var(--tinta)}
+.pto.sug i{box-shadow:0 0 0 5px color-mix(in srgb, var(--profundo) 30%, transparent);border-color:var(--profundo)}
+.pto:active i{transform:scale(1.35)}
+.pto.tu::after{
+  content:"";position:absolute;inset:9px;border-radius:50%;
+  border:1px solid var(--profundo);animation:onda 2s ease-out infinite;
+}
+.ruta{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.ruta path{fill:none;stroke:var(--profundo);stroke-width:1.5;stroke-dasharray:4 4;opacity:.7}
+
+/* ============ P4 · journey (mini etiqueta SONA) ============ */
+.etiqueta{
+  border-radius:22px;overflow:hidden;border:1px solid var(--hair);flex:none;
+  background:var(--papel);box-shadow:0 18px 50px rgba(20,22,25,.16);
+}
+.etiqueta .cielo{height:88px;position:relative;transition:background .5s}
+.etiqueta .cielo::after{content:"";position:absolute;inset:0;background:var(--grano);background-size:220px;opacity:.5;mix-blend-mode:overlay}
+.etiqueta .cuerpo{padding:14px 18px 16px}
+.etiqueta .cabet{display:flex;justify-content:space-between;font-size:8.5px;letter-spacing:.18em;text-transform:uppercase}
+.etiqueta .cabet .f{color:var(--tintaSuave);letter-spacing:.1em}
+.jlista{margin-top:6px}
+.jlista li{
+  list-style:none;display:flex;justify-content:space-between;gap:10px;
+  padding:8px 0;border-top:1px solid var(--hair);
+  font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--tintaSuave);
+}
+.jlista li:first-child{border-top:0}
+.jlista li b{font-family:var(--grot);font-weight:300;font-size:13.5px;color:var(--tinta);letter-spacing:0;text-transform:none}
+.firma{text-align:center;font:italic 400 17px Georgia,"Times New Roman",serif;margin-top:10px}
+
+/* ============ pop-up circular: la mirilla del espacio ============ */
+#mirilla{
+  position:absolute;z-index:30;
+  width:158px;height:158px;border-radius:50%;
+  transform:translate(-50%,-100%) scale(.3);
+  opacity:0;pointer-events:none;
+  transition:transform .45s cubic-bezier(.34,1.56,.5,1),opacity .3s ease;
+  filter:drop-shadow(0 16px 34px rgba(20,22,25,.35));
+}
+#mirilla.ver{opacity:1;pointer-events:auto;transform:translate(-50%,-100%) scale(1)}
+#mirilla .foto{
+  position:absolute;inset:0;border-radius:50%;overflow:hidden;
+  border:2px solid var(--papel);
+  outline:1px solid var(--hair);
+}
+#mirilla .foto img{width:100%;height:100%;object-fit:cover;display:block}
+/* el velo del mood sobre la foto: la mirilla también pertenece al clima */
+#mirilla .foto::after{
+  content:"";position:absolute;inset:0;border-radius:50%;
+  background:var(--cielo);opacity:.24;mix-blend-mode:color;
+}
+#mirilla .foto::before{
+  content:"";position:absolute;inset:0;border-radius:50%;z-index:2;
+  background:var(--grano);background-size:220px;opacity:.4;mix-blend-mode:overlay;
+}
+/* etiqueta colgante del nombre */
+#mirilla .tag{
+  position:absolute;left:50%;bottom:-13px;transform:translateX(-50%);z-index:3;
+  background:var(--tinta);color:var(--papel);border-radius:999px;
+  font-size:8px;letter-spacing:.16em;text-transform:uppercase;
+  padding:6px 13px;white-space:nowrap;
+}
+/* piquito hacia el punto */
+#mirilla::after{
+  content:"";position:absolute;left:50%;bottom:-26px;transform:translateX(-50%);
+  border:7px solid transparent;border-top:9px solid var(--papel);
+}
+
+/* aviso */
+#aviso{
+  position:absolute;left:50%;bottom:24px;transform:translate(-50%,10px);
+  background:var(--tinta);color:var(--papel);border-radius:999px;
+  font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  padding:10px 20px;opacity:0;transition:opacity .3s,transform .3s;
+  pointer-events:none;white-space:nowrap;z-index:50;max-width:92%;
+  overflow:hidden;text-overflow:ellipsis;
+}
+#aviso.ver{opacity:1;transform:translate(-50%,0)}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ P0 · SONA: la presencia ============ -->
+  <div class="pant viva" id="p0">
+    <div class="arriba">
+      <span class="lugar"><b>SONA</b>LOBBY DEL MUSEO</span>
+      <span class="fecha" id="fecha0"></span>
+    </div>
+    <div id="bandaCaja"><div id="banda"><svg viewBox="0 0 932 200" role="img" aria-label="sona"></svg></div></div>
+    <div class="dato">
+      <span class="l">Estado del lugar</span>
+      <div id="estadoPal">—</div>
+      <div id="indiceLin"><span><span id="indiceNum">—</span><small>%</small></span><span class="desc">Índice del lugar</span></div>
+    </div>
+    <button id="entrar">
+      <span class="aro">◉</span>
+      <span class="tx">Toca para entrar<i>sesión anónima · sin cuenta</i></span>
+    </button>
+  </div>
+
+  <!-- ============ P1 · perfil ============ -->
+  <div class="pant papel" id="p1">
+    <div class="cab"><span class="z"><b>SONA</b></span><span class="paso">Tap 1 · Entrada</span></div>
+    <div class="grande">¿Cómo quieres<br>recorrer hoy?</div>
+    <div class="pref" id="prefs"></div>
+    <div class="propone">
+      <div class="qp">Perfil sugerido: <em id="perfilSug">recorrido sereno</em></div>
+      <p class="por" id="perfilPor"></p>
+    </div>
+    <div style="margin-top:auto"><button class="bt lleno" id="btEmpezar">Empezar así</button></div>
+  </div>
+
+  <!-- ============ P2 · recorrido ============ -->
+  <div class="pant papel" id="p2">
+    <div class="cab"><span class="z"><b>SONA</b></span><span class="paso" id="pasoMapa">Recorrido</span></div>
+    <div class="sala">
+      <div class="cielo" id="salaCielo"></div>
+      <div class="datos"><span class="nom" id="salaNom">Vestíbulo</span><span class="est" id="salaEst">—</span></div>
+    </div>
+    <div class="mapa" id="mapa">
+      <svg class="ruta" id="rutaSvg" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+      <div id="mirilla" role="dialog" aria-label="Vista del espacio">
+        <div class="foto"><img id="mirillaImg" src="" alt=""></div>
+        <span class="tag" id="mirillaTag"></span>
+      </div>
+    </div>
+    <p class="micro">El halo marca la sugerencia — el orden es tuyo</p>
+  </div>
+
+  <!-- ============ P3 · decisión ============ -->
+  <div class="pant papel" id="p3">
+    <div class="cab"><span class="z"><b>SONA</b></span><span class="paso">Entre taps · Decisión</span></div>
+    <div class="sala">
+      <div class="cielo" id="deciCielo"></div>
+      <div class="datos"><span class="nom" id="deciNom">—</span><span class="est" id="deciEst">—</span></div>
+    </div>
+    <div class="propone">
+      <div class="qp" id="deciQ">—</div>
+      <p class="por" id="deciPor">—</p>
+      <div class="dos">
+        <button class="bt lleno" id="btCambiar">Sí, cambiar</button>
+        <button class="bt" id="btSeguir">Seguir igual</button>
+      </div>
+    </div>
+    <p class="micro" style="text-align:center">También puedes descansar en el patio<br>o salir por la rampa norte — todo es válido</p>
+  </div>
+
+  <!-- ============ P4 · journey ============ -->
+  <div class="pant papel" id="p4">
+    <div class="cab"><span class="z"><b>SONA</b></span><span class="paso">Tap final · Cierre</span></div>
+    <div class="etiqueta">
+      <div class="cielo" id="jCielo"></div>
+      <div class="cuerpo">
+        <div class="cabet"><span>Sensory Journey</span><span class="f" id="jFecha"></span></div>
+        <ul class="jlista">
+          <li>Estado dominante <b id="jEstado">—</b></li>
+          <li>Ruta realizada <b id="jRuta">—</b></li>
+          <li>Decisión <b id="jDecision">—</b></li>
+          <li>Tiempo <b id="jTiempo">—</b></li>
+        </ul>
+        <div class="firma">sona</div>
+      </div>
+    </div>
+    <div class="propone">
+      <div class="qp">¿Guardar como <em>mi perfil</em>?</div>
+      <p class="por">Solo el Session ID · sin datos personales. Borrar también es un derecho.</p>
+      <div class="dos">
+        <button class="bt lleno" id="btGuardar">Guardar</button>
+        <button class="bt" id="btBorrar">Borrar todo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ P5 · vuelta a SONA ============ -->
+  <div class="pant" id="p5" style="justify-content:center;align-items:center;text-align:center;gap:20px">
+    <div class="grande" id="despedida">Buen viaje</div>
+    <p class="micro" id="despedidaSub"></p>
+    <button class="bt" style="width:auto;padding:0 26px" id="btOtra">Volver a empezar</button>
+  </div>
+
+  <div id="aviso"></div>
+</div>
+
+<script>
+const rm=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const $=id=>document.getElementById(id);
+
+/* ============ LOS MUNDOS (familias de mood, DESIGN.md) ============ */
+const MUNDOS={
+  Calmado:{cielo:"linear-gradient(180deg,#8fa0b4 0%,#aebbc6 42%,#cfd4d4 74%,#e3e0d8 100%)",
+    papel:"#f0f1f0",tinta:"#2b3440",claro:"#a9bbca",profundo:"#26333f",tempo:4.8},
+  Equilibrado:{cielo:"linear-gradient(180deg,#93a893 0%,#adbfa9 42%,#cfd6c6 74%,#e6e3d6 100%)",
+    papel:"#f0f1ea",tinta:"#2a3430",claro:"#a8bcab",profundo:"#243830",tempo:3.6},
+  Activo:{cielo:"linear-gradient(180deg,#b39a72 0%,#c4ad88 42%,#d8cba9 74%,#e9e2cd 100%)",
+    papel:"#f2efe6",tinta:"#403626",claro:"#cdb98f",profundo:"#3d3322",tempo:2.0},
+  Concurrido:{cielo:"linear-gradient(180deg,#ad7a60 0%,#bf9179 42%,#d4b39c 74%,#e8dcc9 100%)",
+    papel:"#f3ede4",tinta:"#3f2d22",claro:"#cfa88f",profundo:"#42291c",tempo:1.2},
+};
+let moodVigente="Calmado";
+function teñir(nombre){
+  moodVigente=nombre;
+  const m=MUNDOS[nombre],r=document.documentElement.style;
+  r.setProperty("--cielo",m.cielo);
+  r.setProperty("--papel",m.papel);
+  r.setProperty("--tinta",m.tinta);
+  r.setProperty("--tintaSuave",m.tinta+"9e");
+  r.setProperty("--claro",m.claro);
+  r.setProperty("--profundo",m.profundo);
+  r.setProperty("--hair",m.tinta+"29");
+}
+
+/* ============ estado de la sesión ============ */
+const S={prefs:{Ritmo:2,Gente:1,Sonido:1,"Guía":3},visitados:[],decision:null,t0:null};
+let minutos=9*60+4;
+function hora(){return `${Math.floor(minutos/60)}:${String(minutos%60).padStart(2,"0")}`}
+function tic(n){minutos+=n}
+
+let avisoT;
+function aviso(txt){
+  const a=$("aviso");a.textContent=txt;a.classList.add("ver");
+  clearTimeout(avisoT);avisoT=setTimeout(()=>a.classList.remove("ver"),2200);
+}
+function ir(id){document.querySelectorAll(".pant").forEach(p=>p.classList.toggle("viva",p.id===id))}
+
+/* ============ P0 · SONA: presencia con la banda viva ============ */
+$("fecha0").textContent=`MAR · 23 · 07 · ${hora()}`;
+
+/* biblioteca de flancos (ids DESIGN.md v3) */
+const LETRAS={S:{n:17,i:5,d:13,a:9},O:{n:16,i:8,d:20,a:12},N:{n:7,i:19,d:15,a:11},A:{n:6,i:18,d:14,a:10}};
+const PALABRA=["S","O","N","A"];
+const ESPACIO=44,SLOT=200+ESPACIO;
+/* voces desparejas (deterministas): factor de compás, desfase, secuencia */
+const VOCES=[[1.0,0,["n","d","a","d"]],[1.5,.4,["n","i","d","n"]],[.5,.75,["n","a","i","n"]],[2.0,.2,["n","i","a","i"]]];
+const svgBanda=document.querySelector("#banda svg");
+
+Promise.all(PALABRA.map(async L=>{
+  const ests={};
+  for(const [est,num] of Object.entries(LETRAS[L])){
+    try{
+      const txt=await (await fetch(`variantes/Recurso ${num}.svg`)).text();
+      const doc=new DOMParser().parseFromString(txt,"image/svg+xml");
+      ests[est]=[...doc.documentElement.querySelectorAll("path")].map(p=>p.getAttribute("d"));
+    }catch(e){ests[est]=[]}
+  }
+  return ests;
+})).then(letras=>{
+  const NS="http://www.w3.org/2000/svg";
+  const capas=letras.map((ests,i)=>{
+    const g=document.createElementNS(NS,"g");
+    g.setAttribute("transform",`translate(${i*SLOT} 0)`);
+    const por={};
+    for(const [est,ds] of Object.entries(ests)){
+      const ge=document.createElementNS(NS,"g");ge.style.opacity=0;
+      ds.forEach(d=>{const p=document.createElementNS(NS,"path");p.setAttribute("d",d);p.setAttribute("fill","currentColor");ge.appendChild(p)});
+      g.appendChild(ge);por[est]=ge;
+    }
+    svgBanda.appendChild(g);return por;
+  });
+  const fijar=(i,est)=>{for(const [k,ge] of Object.entries(capas[i]))ge.style.opacity=k===est?1:0};
+  const vis=[-1,-1,-1,-1];
+  PALABRA.forEach((_,i)=>fijar(i,VOCES[i][2][0]));
+  if(!rm){
+    (function reloj(t){
+      const s=t/1000,base=MUNDOS[moodVigente].tempo;
+      VOCES.forEach(([f,d,seq],i)=>{
+        const c=Math.floor(s/(base*f)+d)%seq.length;
+        if(c!==vis[i]){vis[i]=c;fijar(i,seq[c])}
+      });
+      requestAnimationFrame(reloj);
+    })(performance.now());
+  }
+});
+
+/* índice del lugar (cuenta al abrir) */
+function contarIndice(destino){
+  const el=$("indiceNum"),origen=parseInt(el.textContent)||0,t0=performance.now(),dur=rm?0:900;
+  (function paso(t){
+    const k=dur?Math.min(1,(t-t0)/dur):1,e=1-Math.pow(1-k,3);
+    el.textContent=Math.round(origen+(destino-origen)*e);
+    if(k<1)requestAnimationFrame(paso);
+  })(t0);
+}
+function presentar(estado,indice){
+  teñir(estado);
+  $("estadoPal").textContent=estado;
+  contarIndice(indice);
+}
+presentar("Calmado",82); /* el lobby amanece Calmado */
+
+/* el tap de entrada desbloquea SONA */
+$("entrar").addEventListener("click",()=>{
+  S.t0=minutos;
+  aviso("Tap 1 · sesión #4F2A creada");
+  $("perfilPor").textContent=`${$("fecha0").textContent.toLowerCase()}: el museo amanece ${moodVigente}. Medido por el equipo SONA · 21 jul. Puedes mover cada nivel.`;
+  ir("p1");
+});
+
+/* ============ P1 · perfil ============ */
+const prefsCont=$("prefs");
+Object.entries(S.prefs).forEach(([k,v])=>{
+  const fila=document.createElement("div");fila.className="fila";
+  fila.innerHTML=`<span>${k}</span><span class="tres"></span>`;
+  const tres=fila.querySelector(".tres");
+  for(let i=1;i<=3;i++){
+    const c=document.createElement("i");
+    c.addEventListener("click",()=>{
+      S.prefs[k]=i;
+      [...tres.children].forEach((el,j)=>el.classList.toggle("on",j<i));
+      aviso(`${k}: nivel ${i} — tú decides`);
+    });
+    tres.appendChild(c);
+  }
+  [...tres.children].forEach((el,j)=>el.classList.toggle("on",j<v));
+  prefsCont.appendChild(fila);
+});
+$("btEmpezar").addEventListener("click",()=>{tic(6);aviso("Perfil fijado — es tuyo, no del motor");ir("p2");pintarMapa()});
+
+/* ============ P2 · el mapa ============ */
+const SONAS=[
+  {id:"A",nom:"Sala de grabados",est:"Calmado",x:24,y:72},
+  {id:"B",nom:"Mezzanine",est:"Equilibrado",x:46,y:38},
+  {id:"C",nom:"Sala principal",est:"Concurrido",x:76,y:26},
+  {id:"D",nom:"Patio",est:"Activo",x:78,y:74,img:"img/patio.jpg"},
+];
+
+/* ---- mirilla: pop-up circular con la foto del espacio ---- */
+let mirillaT;
+function mirilla(z){
+  const m=$("mirilla");
+  $("mirillaImg").src=z.img;
+  $("mirillaImg").alt=z.nom;
+  $("mirillaTag").textContent=z.nom+" · "+z.est;
+  m.style.left=z.x+"%";
+  m.style.top=(z.y-7)+"%";
+  m.classList.add("ver");
+  clearTimeout(mirillaT);
+  mirillaT=setTimeout(()=>m.classList.remove("ver"),4200);
+}
+$("mirilla").addEventListener("click",()=>{clearTimeout(mirillaT);$("mirilla").classList.remove("ver")});
+const mapa=$("mapa");
+SONAS.forEach(z=>{
+  const n=document.createElement("span");n.className="zona-n";
+  n.style.left=z.x+"%";n.style.top=(z.y+11)+"%";n.textContent=z.nom;
+  mapa.appendChild(n);
+  const b=document.createElement("button");b.className="pto";b.id="pto"+z.id;
+  b.style.left=z.x+"%";b.style.top=z.y+"%";
+  b.setAttribute("aria-label",z.nom);b.innerHTML="<i></i>";
+  b.addEventListener("click",()=>tap(z));
+  mapa.appendChild(b);
+});
+function siguiente(){
+  const libres=SONAS.filter(z=>!S.visitados.includes(z.id));
+  if(!libres.length)return null;
+  if(S.prefs.Gente===1){
+    const calmos=libres.filter(z=>z.est!=="Concurrido");
+    if(calmos.length)return calmos[0];
+  }
+  return libres[0];
+}
+function pintarMapa(){
+  const sig=siguiente();
+  const aquiId=S.visitados[S.visitados.length-1];
+  const aqui=aquiId?SONAS.find(z=>z.id===aquiId):null;
+  SONAS.forEach(z=>{
+    const b=$("pto"+z.id);
+    b.classList.toggle("hecho",S.visitados.includes(z.id));
+    b.classList.toggle("sug",!!sig&&z.id===sig.id);
+    b.classList.toggle("tu",z.id===aquiId);
+  });
+  const estAqui=aqui?aqui.est:"Calmado";
+  teñir(estAqui); /* LA APP ENTERA se retiñe con la sala donde estás */
+  $("salaNom").textContent=aqui?aqui.nom:"Vestíbulo";
+  $("salaEst").textContent=estAqui;
+  $("salaCielo").style.background=MUNDOS[estAqui].cielo;
+  $("pasoMapa").textContent=`Tap ${S.visitados.length+1} · ${S.visitados.length} de 3 puntos · ${hora()}`;
+  const svg=$("rutaSvg");svg.innerHTML="";
+  if(aqui&&sig){
+    const p=document.createElementNS("http://www.w3.org/2000/svg","path");
+    p.setAttribute("d",`M${aqui.x} ${aqui.y} Q${(aqui.x+sig.x)/2} ${(aqui.y+sig.y)/2-14} ${sig.x} ${sig.y}`);
+    svg.appendChild(p);
+  }
+}
+function tap(z){
+  if(S.visitados.includes(z.id)){aviso("Ya visitaste "+z.nom);return}
+  S.visitados.push(z.id);
+  tic(14+Math.round(z.x/10));
+  aviso(`Tap · ${z.nom} registrada`);
+  if(z.img)mirilla(z); /* la mirilla: el espacio se asoma */
+  const espera=rm?0:(z.img?2400:600); /* con mirilla, deja verla antes de avanzar */
+  if(S.visitados.length===2&&!S.visitados.includes("C")&&S.prefs.Gente<=2){
+    prepararDecision();
+    setTimeout(()=>ir("p3"),espera);
+  }else if(S.visitados.length>=3){
+    setTimeout(()=>cerrar(),espera);
+  }else pintarMapa();
+}
+
+/* ============ P3 · la decisión ============ */
+function prepararDecision(){
+  teñir("Concurrido");
+  $("deciCielo").style.background=MUNDOS.Concurrido.cielo;
+  $("deciNom").textContent="Sala principal";
+  $("deciEst").textContent="Concurrida";
+  $("deciQ").innerHTML=`¿Prefieres el <em>patio</em> primero?`;
+  $("deciPor").textContent=`Porque llevas ${minutos-S.t0} min sin pausa, y la sala principal está en su hora más densa (reportado en sala hace 20 min). Vuelve a las 11: estará Calmada.`;
+}
+$("btCambiar").addEventListener("click",()=>{S.decision="Cambió a una ruta tranquila";aviso("Decisión tuya: ruta tranquila");tic(4);ir("p2");pintarMapa()});
+$("btSeguir").addEventListener("click",()=>{S.decision="Siguió su plan original";aviso("Decisión tuya: seguir igual");tic(4);ir("p2");pintarMapa()});
+
+/* ============ P4 · journey ============ */
+function cerrar(){
+  const estDom=S.visitados.includes("C")?"Equilibrado":"Calmado";
+  teñir(estDom);
+  $("jCielo").style.background=MUNDOS[estDom].cielo;
+  $("jFecha").textContent=`23 · 07 · ${hora()}`;
+  $("jEstado").textContent=estDom;
+  $("jRuta").textContent=S.visitados.join(" → ");
+  $("jDecision").textContent=S.decision||"Sin intervenciones";
+  $("jTiempo").textContent=(minutos-S.t0)+" min";
+  aviso("Tap final · fin del recorrido");
+  ir("p4");
+}
+$("btGuardar").addEventListener("click",()=>{
+  $("despedida").textContent="Perfil guardado";
+  $("despedidaSub").innerHTML="Solo el Session ID #4F2A · sin datos personales<br>La próxima visita empieza donde la dejaste";
+  ir("p5");
+});
+$("btBorrar").addEventListener("click",()=>{
+  $("despedida").textContent="Todo borrado";
+  $("despedidaSub").innerHTML="Ni siquiera el Session ID<br>Como si nunca hubieras pasado — ese también es el diseño";
+  ir("p5");
+});
+$("btOtra").addEventListener("click",()=>location.reload());
+</script>
+</body>
+</html>
