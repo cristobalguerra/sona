@@ -121,12 +121,14 @@ body{
 .cabecera{
   position:sticky;top:0;z-index:6;flex:none;
   display:grid;grid-template-columns:40px 1fr 40px;align-items:center;
-  margin:calc(-18px - env(safe-area-inset-top)) -22px 0;
-  padding:calc(16px + env(safe-area-inset-top)) 22px 14px;
-  background:color-mix(in srgb,var(--fondo) 55%,transparent);
-  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
-  -webkit-mask-image:linear-gradient(to bottom,#000 68%,transparent);
-  mask-image:linear-gradient(to bottom,#000 68%,transparent);
+  /* sobresale por arriba: el vidrio siempre cubre hasta el borde */
+  margin:calc(-34px - env(safe-area-inset-top)) -22px 0;
+  padding:calc(32px + env(safe-area-inset-top)) 22px 14px;
+  /* SIN color: puro desenfoque de vidrio */
+  background:transparent;
+  -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+  -webkit-mask-image:linear-gradient(to bottom,#000 72%,transparent);
+  mask-image:linear-gradient(to bottom,#000 72%,transparent);
 }
 .cabecera .centro{grid-column:2;display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center}
 .cabecera .marca{
