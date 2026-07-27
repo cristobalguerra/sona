@@ -124,11 +124,8 @@ body{
   /* sobresale por arriba: el vidrio siempre cubre hasta el borde */
   margin:calc(-34px - env(safe-area-inset-top)) -22px 0;
   padding:calc(32px + env(safe-area-inset-top)) 22px 14px;
-  /* sin rectángulo: solo el desenfoque puro del contenido que pasa */
+  /* NADA de rectángulo: el header es solo texto fijo sobre el mundo */
   background:transparent;
-  -webkit-backdrop-filter:blur(20px) saturate(1.35);backdrop-filter:blur(20px) saturate(1.35);
-  -webkit-mask-image:linear-gradient(to bottom,#000 72%,transparent);
-  mask-image:linear-gradient(to bottom,#000 72%,transparent);
 }
 .cabecera .centro{grid-column:2;display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center}
 .cabecera .marca{
