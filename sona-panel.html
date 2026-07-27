@@ -4,17 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0e1013">
-<title>SONA · Panel del lugar</title>
+<title>SONA · Biblioteca de lugares</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&family=Hanken+Grotesk:wght@200;300;400;500&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
-   SONA — PANEL DEL LUGAR (llenado, capas 1-2 del PRD)
-   El equipo/operador captura los espacios de un lugar con el
-   MISMO lenguaje de la app: aurora del mood, onda de lectura,
-   vidrio líquido, chrome de cabecera. Persiste en localStorage
-   y exporta el acta como JSON.
+   SONA — BIBLIOTECA DE LUGARES (herramienta interna)
+   El equipo de consultoría administra su cartera de lugares:
+   biblioteca con buscador y alta (+), ficha por lugar con sus
+   espacios editables, y el CÓDIGO del lugar (QR) que el
+   visitante escanea para llegar a la lectura en la app.
+   Mismo lenguaje de la app: aurora, onda, vidrio líquido.
+   Persiste en localStorage (v2) y exporta el acta como JSON.
    ============================================================ */
 :root{
   --fondo:#0e1013;
@@ -66,13 +68,18 @@ body{
 @keyframes resp2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-6%,-4%) scale(1.18)}}
 #aurora::after{content:"";position:absolute;inset:0;background:linear-gradient(to top, var(--fondo) 4%, transparent 46%)}
 
-/* ---------- la página (una sola, scrolleable) ---------- */
-#hoja{
-  position:absolute;inset:0;z-index:1;
+/* ---------- hojas (biblioteca ⇄ lugar) ---------- */
+.hoja{
+  position:absolute;inset:0;
   padding:calc(18px + env(safe-area-inset-top)) 22px calc(26px + env(safe-area-inset-bottom));
   display:flex;flex-direction:column;gap:20px;
   overflow-y:auto;overscroll-behavior:contain;
+  transition:transform .5s cubic-bezier(.32,.72,.35,1),opacity .4s;
 }
+#vBiblio{z-index:1}
+#vBiblio.atras{transform:translateX(-12%);opacity:0;pointer-events:none}
+#vLugar{z-index:2;transform:translateX(102%)}
+#vLugar.activa{transform:translateX(0)}
 
 .cabecera{
   position:sticky;top:0;z-index:6;flex:none;
@@ -88,6 +95,7 @@ body{
   color:var(--texto);text-transform:uppercase;
 }
 .cabecera .sub{font-size:8px;letter-spacing:.26em;text-transform:uppercase;color:var(--textoSuave)}
+.cabecera .izq{grid-column:1}
 .cabecera .der{grid-column:3}
 
 .ctrl{
@@ -102,6 +110,72 @@ body{
 
 .micro{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--textoSuave);line-height:1.9}
 .l{font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--textoSuave)}
+
+/* ---------- ventana de vidrio (compartida) ---------- */
+.ventana{
+  display:flex;flex-direction:column;
+  margin:4px 0 0;
+  background:rgba(8,9,11,.62);border-radius:26px;
+  border:1px solid var(--supBorde);
+  -webkit-backdrop-filter:blur(26px) saturate(1.3);backdrop-filter:blur(26px) saturate(1.3);
+  padding:22px 20px 20px;
+  box-shadow:0 18px 50px rgba(0,0,0,.4);
+}
+.ventanaCab{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.ventanaCab .t{font-size:11px;letter-spacing:.22em;text-transform:uppercase}
+
+/* ---------- biblioteca ---------- */
+#tituloBiblio{display:flex;flex-direction:column;gap:6px;flex:none}
+#tituloBiblio h1{
+  font-family:var(--grot);font-weight:200;font-size:34px;line-height:1.1;letter-spacing:-.02em;
+}
+#cuentaBiblio{font-family:var(--grot);font-weight:300;font-size:15px;color:var(--textoSuave)}
+
+#busca{
+  display:flex;align-items:center;gap:10px;
+  border:1px solid rgba(255,255,255,.10);border-radius:14px;
+  background:rgba(255,255,255,.04);padding:0 13px;margin-bottom:12px;
+}
+#busca svg{flex:none;opacity:.5}
+#busca input{
+  flex:1;background:none;border:none;color:var(--texto);
+  font-family:var(--mono);font-size:12px;letter-spacing:.04em;
+  padding:12px 0;min-width:0;
+}
+#busca input:focus{outline:none}
+#busca input::placeholder{color:rgba(236,238,233,.3)}
+
+/* tarjeta de lugar (mismo vidrio que las de espacio) */
+.esp{
+  border:1px solid rgba(255,255,255,.09);border-radius:20px;
+  background:linear-gradient(135deg,rgba(255,255,255,.055),rgba(255,255,255,.015) 55%,rgba(255,255,255,.035));
+  -webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 8px 22px rgba(0,0,0,.16);
+  margin:9px 0;overflow:hidden;
+}
+.esp .fila{
+  display:flex;align-items:center;gap:14px;padding:16px 18px;cursor:pointer;
+}
+.esp .fila:active{opacity:.8}
+.esp .pun{width:10px;height:10px;border-radius:50%;flex:none}
+.esp .info{flex:1;min-width:0}
+.esp .nom{font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.esp .nomLugar{font-family:var(--grot);font-weight:300;font-size:16px;letter-spacing:0;text-transform:none}
+.esp .cli{font-family:var(--grot);font-weight:300;font-size:13px;color:var(--textoSuave);margin-top:4px}
+.esp .cod{
+  flex:none;font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;
+  color:var(--textoSuave);border:1px solid var(--hair);border-radius:7px;padding:4px 7px;
+  max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.esp .flecha{color:var(--textoSuave);font-family:var(--grot);transition:transform .3s}
+.esp.abierto .flecha{transform:rotate(90deg)}
+
+.vacio{
+  padding:26px 10px;text-align:center;
+  font-family:var(--grot);font-weight:300;font-size:13px;line-height:1.7;
+  color:var(--textoSuave);
+}
+.vacio .bt{margin-top:14px}
 
 /* ---------- lectura del lugar ---------- */
 #lectura{display:flex;flex-direction:column;gap:14px;flex:none}
@@ -121,39 +195,7 @@ body{
 #consultor::placeholder{color:rgba(236,238,233,.3)}
 #consultor:focus{outline:none;border-bottom-color:var(--hair)}
 
-/* ---------- la ventana de espacios ---------- */
-#ventana{
-  display:flex;flex-direction:column;
-  margin:4px 0 0;
-  background:rgba(8,9,11,.62);border-radius:26px;
-  border:1px solid var(--supBorde);
-  -webkit-backdrop-filter:blur(26px) saturate(1.3);backdrop-filter:blur(26px) saturate(1.3);
-  padding:22px 20px 20px;
-  box-shadow:0 18px 50px rgba(0,0,0,.4);
-}
-.ventanaCab{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
-.ventanaCab .t{font-size:11px;letter-spacing:.22em;text-transform:uppercase}
-
-/* tarjeta de espacio (vidrio líquido, como la app) */
-.esp{
-  border:1px solid rgba(255,255,255,.09);border-radius:20px;
-  background:linear-gradient(135deg,rgba(255,255,255,.055),rgba(255,255,255,.015) 55%,rgba(255,255,255,.035));
-  -webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 8px 22px rgba(0,0,0,.16);
-  margin:9px 0;overflow:hidden;
-}
-.esp .fila{
-  display:flex;align-items:center;gap:14px;padding:16px 18px;cursor:pointer;
-}
-.esp .fila:active{opacity:.8}
-.esp .pun{width:10px;height:10px;border-radius:50%;flex:none}
-.esp .info{flex:1;min-width:0}
-.esp .nom{font-size:11px;letter-spacing:.1em;text-transform:uppercase}
-.esp .cli{font-family:var(--grot);font-weight:300;font-size:13px;color:var(--textoSuave);margin-top:4px}
-.esp .flecha{color:var(--textoSuave);font-family:var(--grot);transition:transform .3s}
-.esp.abierto .flecha{transform:rotate(90deg)}
-
-/* el editor desplegado */
+/* el editor desplegado de un espacio */
 .editor{display:none;flex-direction:column;gap:16px;padding:2px 18px 18px;border-top:1px solid var(--hair)}
 .esp.abierto .editor{display:flex}
 .editor .campo{display:flex;flex-direction:column;gap:8px;padding-top:14px}
@@ -212,6 +254,27 @@ body{
   text-transform:uppercase;color:rgba(236,120,110,.75);
   background:none;border:none;cursor:pointer;padding:6px 0 0;
 }
+#btQuitarLugar{align-self:center;padding:4px 12px}
+
+/* ---------- el código del lugar (QR) ---------- */
+.qrCaja{display:flex;gap:18px;align-items:center}
+.qrTile{
+  flex:none;background:#eceee9;border-radius:18px;padding:14px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 10px 26px rgba(0,0,0,.3);
+}
+.qrTile canvas{display:block;width:118px;height:118px;image-rendering:pixelated}
+.qrLado{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+#codigoLugar{
+  font-family:var(--mono);font-size:15px;letter-spacing:.18em;text-transform:uppercase;
+  background:none;border:none;border-bottom:1px solid transparent;
+  color:var(--texto);width:100%;padding:4px 0;transition:border-color .2s;
+}
+#codigoLugar:focus{outline:none;border-bottom-color:var(--hair)}
+#ligaLugar{
+  font-family:var(--mono);font-size:8.5px;line-height:1.7;
+  color:var(--textoSuave);word-break:break-all;
+}
+.qrBotones{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
 
 /* botones */
 .bt{
@@ -261,8 +324,43 @@ body{
     <div class="blob b2"></div>
   </div>
 
-  <div id="hoja">
+  <!-- ============ HOJA 1 · LA BIBLIOTECA ============ -->
+  <div class="hoja" id="vBiblio">
     <div class="cabecera">
+      <span class="centro">
+        <span class="marca">SONA</span>
+        <span class="sub">Consultoría · uso interno</span>
+      </span>
+      <button class="ctrl der" id="btAlta" aria-label="Dar de alta un lugar">+</button>
+    </div>
+
+    <div id="tituloBiblio">
+      <span class="l">Biblioteca</span>
+      <h1>Lugares</h1>
+      <div id="cuentaBiblio">—</div>
+    </div>
+
+    <div class="ventana">
+      <div id="busca">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"/><path d="m20 20-3.4-3.4"/>
+        </svg>
+        <input id="inpBusca" type="search" placeholder="Buscar lugar o código" aria-label="Buscar lugar o código">
+      </div>
+      <div id="listaLugares"></div>
+    </div>
+
+    <span class="pie">Biblioteca de lugares · equipo de consultoría SONA · CRGS UDEM</span>
+  </div>
+
+  <!-- ============ HOJA 2 · EL LUGAR ============ -->
+  <div class="hoja" id="vLugar">
+    <div class="cabecera">
+      <button class="ctrl izq" id="btVolver" aria-label="Volver a la biblioteca">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M15 6l-6 6 6 6"/>
+        </svg>
+      </button>
       <span class="centro">
         <span class="marca">SONA</span>
         <span class="sub">Consultoría · uso interno</span>
@@ -279,14 +377,14 @@ body{
       <canvas id="ondaLugar" aria-hidden="true"></canvas>
       <div>
         <span class="l">Lectura del lugar</span>
-        <input id="nombreLugar" type="text" value="Museo MARCO" aria-label="Nombre del lugar">
+        <input id="nombreLugar" type="text" aria-label="Nombre del lugar">
         <div id="estadoLugar">—</div>
         <input id="consultor" type="text" placeholder="¿Quién mide? (firma del acta)" aria-label="Consultor que firma la medición">
       </div>
     </div>
 
     <!-- los espacios -->
-    <div id="ventana">
+    <div class="ventana">
       <div class="ventanaCab">
         <span class="t">Espacios</span>
         <button class="ctrl" id="btAgregar" aria-label="Añadir espacio">+</button>
@@ -294,6 +392,30 @@ body{
       <div id="listaEsp"></div>
       <button class="bt lleno" id="btCopiar" style="margin-top:14px">Copiar acta del lugar</button>
     </div>
+
+    <!-- el código que el visitante escanea -->
+    <div class="ventana">
+      <div class="ventanaCab">
+        <span class="t">Código del lugar</span>
+      </div>
+      <span class="micro" style="margin-bottom:16px">El visitante lo escanea con su cámara y llega a la lectura de este lugar.</span>
+      <div class="qrCaja">
+        <div class="qrTile" role="img" aria-label="Código QR del lugar">
+          <canvas id="qrLugar" width="1" height="1"></canvas>
+        </div>
+        <div class="qrLado">
+          <span class="l">Código</span>
+          <input id="codigoLugar" type="text" aria-label="Código del lugar" spellcheck="false" autocomplete="off">
+          <div id="ligaLugar">—</div>
+        </div>
+      </div>
+      <div class="qrBotones">
+        <button class="bt" id="btLiga">Copiar liga</button>
+        <button class="bt" id="btQR">Descargar QR</button>
+      </div>
+    </div>
+
+    <button class="quitar" id="btQuitarLugar">Quitar este lugar</button>
 
     <span class="pie">Instrumento de llenado · equipo de consultoría SONA · CRGS UDEM</span>
   </div>
@@ -320,12 +442,14 @@ const NIVEL={
   gente:["poca","algo","mucha"],
 };
 const EST_NOMBRE={sonido:"Sonido",luz:"Luz",gente:"Gente"};
+const APP_BASE="https://cristobalguerra.github.io/sona/sona-app.html?lugar=";
 
 function teñir(nombre){
   const m=MUNDOS[nombre],r=document.documentElement.style;
   r.setProperty("--a1",m.a1);r.setProperty("--a2",m.a2);
 }
 function hexRgb(h){return [1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255)}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
 
 let avisoT;
 function aviso(txt){
@@ -333,56 +457,179 @@ function aviso(txt){
   clearTimeout(avisoT);avisoT=setTimeout(()=>a.classList.remove("ver"),2200);
 }
 
-/* ============ ESTADO (persistente) ============ */
-const CLAVE="sona-panel-v1";
+/* ============ ESTADO (persistente, v2: varios lugares) ============ */
+const CLAVE="sona-panel-v2";
 const DEFAULT={
-  lugar:"Museo MARCO",
-  consultor:"",
-  espacios:[
-    {id:"grabados",nom:"Sala de grabados",mood:"Calmado",son:1,luz:1,gen:1,
-     como:"Desde la entrada, de frente y a la izquierda — unos 2 minutos caminando",llena:false,bancas:false},
-    {id:"mezzanine",nom:"Mezzanine",mood:"Equilibrado",son:2,luz:2,gen:2,
-     como:"Sube por la escalera central; está justo arriba del vestíbulo — 1 minuto",llena:false,bancas:false},
-    {id:"principal",nom:"Sala principal",mood:"Concurrido",son:3,luz:3,gen:3,
-     como:"De frente hasta el fondo; la reconoces por el techo alto — 3 minutos",llena:true,bancas:false},
-    {id:"patio",nom:"Patio",mood:"Activo",son:2,luz:3,gen:2,
-     como:"A la derecha de la entrada, cruzando las puertas de cristal — 1 minuto",llena:false,bancas:true},
-  ],
+  lugares:[{
+    id:"marco",codigo:"MARCO",codMan:true,
+    nombre:"Museo MARCO",consultor:"",
+    espacios:[
+      {id:"grabados",nom:"Sala de grabados",mood:"Calmado",son:1,luz:1,gen:1,
+       como:"Desde la entrada, de frente y a la izquierda — unos 2 minutos caminando",llena:false,bancas:false},
+      {id:"mezzanine",nom:"Mezzanine",mood:"Equilibrado",son:2,luz:2,gen:2,
+       como:"Sube por la escalera central; está justo arriba del vestíbulo — 1 minuto",llena:false,bancas:false},
+      {id:"principal",nom:"Sala principal",mood:"Concurrido",son:3,luz:3,gen:3,
+       como:"De frente hasta el fondo; la reconoces por el techo alto — 3 minutos",llena:true,bancas:false},
+      {id:"patio",nom:"Patio",mood:"Activo",son:2,luz:3,gen:2,
+       como:"A la derecha de la entrada, cruzando las puertas de cristal — 1 minuto",llena:false,bancas:true},
+    ],
+  }],
 };
+function slugCodigo(nombre){
+  /* palabras completas hasta 14 chars, sin conectores: la identidad impresa no se corta a medias */
+  const CONECTOR=new Set(["DE","DEL","LA","EL","LOS","LAS","Y","THE","OF"]);
+  const palabras=String(nombre).normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .toUpperCase().split(/[^A-Z0-9]+/).filter(p=>p&&!CONECTOR.has(p));
+  let s="";
+  for(const p of palabras){
+    const sig=s?s+"-"+p:p;
+    if(sig.length>14)break;
+    s=sig;
+  }
+  if(!s&&palabras[0])s=palabras[0].slice(0,14);
+  return s||"LUGAR";
+}
 let E;
-try{E=JSON.parse(localStorage.getItem(CLAVE))||structuredClone(DEFAULT)}
-catch(e){E=structuredClone(DEFAULT)}
+try{
+  E=JSON.parse(localStorage.getItem(CLAVE));
+  if(!E){
+    /* migración desde el panel de un solo lugar (v1) */
+    const v1=JSON.parse(localStorage.getItem("sona-panel-v1"));
+    if(v1&&Array.isArray(v1.espacios)){
+      E={lugares:[{
+        id:"m"+Date.now().toString(36),
+        codigo:slugCodigo(v1.lugar||"Lugar"),codMan:false,
+        nombre:v1.lugar||"Lugar",consultor:v1.consultor||"",
+        espacios:v1.espacios,
+      }]};
+    }
+  }
+}catch(e){E=null}
+if(!E||!Array.isArray(E.lugares))E=structuredClone(DEFAULT);
 function guardar(){
   localStorage.setItem(CLAVE,JSON.stringify(E));
 }
 
-/* ============ AGREGADO: la lectura del lugar ============ */
-let abierto=null; /* id del espacio en edición */
-function moodLugar(){
+let lugarAbierto=null; /* id del lugar en la hoja 2 */
+let abierto=null;      /* id del espacio en edición */
+function L(){return E.lugares.find(l=>l.id===lugarAbierto)||null}
+
+function codigoUnico(base,propioId){
+  let c=base,n=2;
+  while(E.lugares.some(l=>l.id!==propioId&&l.codigo===c)){c=base+"-"+n;n++}
+  return c;
+}
+
+/* ============ AGREGADO: la lectura de un lugar ============ */
+function moodDe(l){
   /* el clima del lugar = el mood dominante (empate → el más intenso) */
   const orden=["Concurrido","Activo","Equilibrado","Calmado"];
-  const cuenta={};E.espacios.forEach(e=>cuenta[e.mood]=(cuenta[e.mood]||0)+1);
+  const cuenta={};l.espacios.forEach(e=>cuenta[e.mood]=(cuenta[e.mood]||0)+1);
   let mejor="Calmado",n=0;
   orden.forEach(m=>{if((cuenta[m]||0)>n){n=cuenta[m];mejor=m}});
   return mejor;
 }
-function promedios(){
-  const n=Math.max(1,E.espacios.length);
-  const s=E.espacios.reduce((a,e)=>({son:a.son+e.son,luz:a.luz+e.luz,gen:a.gen+e.gen}),{son:0,luz:0,gen:0});
+function promediosDe(l){
+  const n=Math.max(1,l.espacios.length);
+  const s=l.espacios.reduce((a,e)=>({son:a.son+e.son,luz:a.luz+e.luz,gen:a.gen+e.gen}),{son:0,luz:0,gen:0});
   return {son:s.son/n/3,luz:s.luz/n/3,gen:s.gen/n/3};
 }
 function pintarLectura(){
-  const m=abierto?E.espacios.find(e=>e.id===abierto)?.mood||moodLugar():moodLugar();
+  const l=L();if(!l)return;
+  const m=abierto?l.espacios.find(e=>e.id===abierto)?.mood||moodDe(l):moodDe(l);
   teñir(m);
   $("estadoLugar").textContent=abierto
     ? CLIMA_PALABRA[m]+" · editando espacio"
-    : CLIMA_LUGAR[moodLugar()]+" · "+E.espacios.length+" espacios";
+    : CLIMA_LUGAR[moodDe(l)]+" · "+l.espacios.length+" "+(l.espacios.length===1?"espacio":"espacios");
 }
+
+/* ============ LA BIBLIOTECA ============ */
+function plano(s){return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()}
+function pintarBiblio(){
+  const q=plano($("inpBusca").value.trim());
+  const cont=$("listaLugares");cont.innerHTML="";
+  const n=E.lugares.length;
+  $("cuentaBiblio").textContent=n===0?"Aún sin lugares":n+" "+(n===1?"lugar medido":"lugares medidos");
+  const lista=E.lugares.filter(l=>!q||plano(l.nombre).includes(q)||plano(l.codigo).includes(q));
+
+  if(!n){
+    cont.innerHTML=`<div class="vacio">Aún no hay lugares en la biblioteca.<br>Da de alta el primero con el botón +.</div>`;
+    return;
+  }
+  if(!lista.length){
+    const v=document.createElement("div");v.className="vacio";
+    v.innerHTML=`Nada con «${esc($("inpBusca").value.trim())}».`;
+    const b=document.createElement("button");b.className="bt";
+    b.textContent="Dar de alta «"+$("inpBusca").value.trim()+"»";
+    b.addEventListener("click",()=>altaLugar($("inpBusca").value.trim()));
+    v.appendChild(b);cont.appendChild(v);
+    return;
+  }
+  lista.forEach(l=>{
+    const m=moodDe(l);
+    const card=document.createElement("div");card.className="esp";
+    card.innerHTML=`
+      <div class="fila">
+        <span class="pun" style="background:${MUNDOS[m].a2}"></span>
+        <span class="info">
+          <span class="nom nomLugar">${esc(l.nombre)}</span>
+          <div class="cli">${CLIMA_LUGAR[m]} · ${l.espacios.length?l.espacios.length+" "+(l.espacios.length===1?"espacio":"espacios"):"sin espacios"}</div>
+        </span>
+        <span class="cod">${esc(l.codigo)}</span>
+        <span class="flecha">›</span>
+      </div>`;
+    card.querySelector(".fila").addEventListener("click",()=>abrirLugar(l.id));
+    cont.appendChild(card);
+  });
+}
+$("inpBusca").addEventListener("input",pintarBiblio);
+$("inpBusca").addEventListener("keydown",ev=>{
+  if(ev.key==="Escape"){$("inpBusca").value="";pintarBiblio()}
+});
+
+/* alta de lugar */
+function altaLugar(nombre){
+  const nom=(nombre||"").trim()||"Nuevo lugar";
+  const id="l"+Date.now().toString(36);
+  const l={id,codigo:codigoUnico(slugCodigo(nom)),codMan:false,nombre:nom,consultor:"",espacios:[]};
+  E.lugares.push(l);
+  guardar();
+  $("inpBusca").value="";
+  pintarBiblio();
+  abrirLugar(id);
+  aviso("Lugar dado de alta — nómbralo y captura sus espacios");
+  setTimeout(()=>{$("nombreLugar").focus();$("nombreLugar").select()},520);
+}
+$("btAlta").addEventListener("click",()=>altaLugar());
+
+/* ============ NAVEGACIÓN ENTRE HOJAS ============ */
+function abrirLugar(id){
+  lugarAbierto=id;abierto=null;quitarArmado=false;pintarQuitar();
+  const l=L();if(!l)return;
+  $("nombreLugar").value=l.nombre;
+  $("consultor").value=l.consultor||"";
+  pintarEspacios();pintarLectura();pintarCodigo();
+  $("vBiblio").classList.add("atras");
+  $("vLugar").classList.add("activa");
+  $("vLugar").scrollTop=0;
+}
+function volver(){
+  lugarAbierto=null;abierto=null;
+  teñir("Calmado");
+  pintarBiblio();
+  $("vBiblio").classList.remove("atras");
+  $("vLugar").classList.remove("activa");
+}
+$("btVolver").addEventListener("click",volver);
 
 /* ============ LA LISTA DE ESPACIOS ============ */
 function pintarEspacios(){
+  const l=L();if(!l)return;
   const cont=$("listaEsp");cont.innerHTML="";
-  E.espacios.forEach(e=>{
+  if(!l.espacios.length){
+    cont.innerHTML=`<div class="vacio">Este lugar aún no tiene espacios.<br>Añade el primero con el botón +.</div>`;
+  }
+  l.espacios.forEach(e=>{
     const card=document.createElement("div");
     card.className="esp"+(abierto===e.id?" abierto":"");
     let cli=CLIMA_PALABRA[e.mood];
@@ -391,13 +638,13 @@ function pintarEspacios(){
     card.innerHTML=`
       <div class="fila" data-abre="${e.id}">
         <span class="pun" style="background:${MUNDOS[e.mood].a2}"></span>
-        <span class="info"><span class="nom">${e.nom}</span><div class="cli">${cli}</div></span>
+        <span class="info"><span class="nom">${esc(e.nom)}</span><div class="cli">${cli}</div></span>
         <span class="flecha">›</span>
       </div>
       <div class="editor">
         <div class="campo">
           <span class="l">Nombre del espacio</span>
-          <input type="text" value="${e.nom.replace(/"/g,'&quot;')}" data-campo="nom">
+          <input type="text" value="${esc(e.nom)}" data-campo="nom">
         </div>
         <div class="campo">
           <span class="l">Clima</span>
@@ -422,7 +669,7 @@ function pintarEspacios(){
         </div>
         <div class="campo">
           <span class="l">Cómo llegar (referencias visibles, tiempo a pie)</span>
-          <textarea rows="2" data-campo="como">${e.como}</textarea>
+          <textarea rows="2" data-campo="como">${esc(e.como)}</textarea>
         </div>
         <div class="campo">
           <span class="l">Señales</span>
@@ -456,7 +703,7 @@ function pintarEspacios(){
       b.addEventListener("click",()=>{e[b.dataset.flag]=!e[b.dataset.flag];guardar();pintarEspacios()});
     });
     card.querySelector("[data-quitar]").addEventListener("click",()=>{
-      E.espacios=E.espacios.filter(x=>x.id!==e.id);abierto=null;
+      l.espacios=l.espacios.filter(x=>x.id!==e.id);abierto=null;
       guardar();pintarEspacios();pintarLectura();
       aviso("Espacio quitado");
     });
@@ -466,29 +713,100 @@ function pintarEspacios(){
 
 /* añadir espacio */
 $("btAgregar").addEventListener("click",()=>{
-  const n=E.espacios.length+1;
+  const l=L();if(!l)return;
+  const n=l.espacios.length+1;
   const id="espacio"+Date.now().toString(36);
-  E.espacios.push({id,nom:"Espacio "+n,mood:"Calmado",son:1,luz:1,gen:1,como:"",llena:false,bancas:false});
+  l.espacios.push({id,nom:"Espacio "+n,mood:"Calmado",son:1,luz:1,gen:1,como:"",llena:false,bancas:false});
   abierto=id;
   guardar();pintarEspacios();pintarLectura();
   aviso("Espacio añadido — captúralo");
 });
 
-/* nombre del lugar */
-$("nombreLugar").value=E.lugar;
-$("nombreLugar").addEventListener("input",()=>{E.lugar=$("nombreLugar").value;guardar()});
-$("consultor").value=E.consultor||"";
-$("consultor").addEventListener("input",()=>{E.consultor=$("consultor").value;guardar()});
+/* nombre del lugar y consultor */
+$("nombreLugar").addEventListener("input",()=>{
+  const l=L();if(!l)return;
+  l.nombre=$("nombreLugar").value;
+  if(!l.codMan){l.codigo=codigoUnico(slugCodigo(l.nombre),l.id);pintarCodigo()}
+  guardar();
+});
+$("consultor").addEventListener("input",()=>{
+  const l=L();if(!l)return;
+  l.consultor=$("consultor").value;guardar();
+});
+
+/* quitar lugar (dos toques: es destructivo) */
+let quitarArmado=false,quitarT;
+function pintarQuitar(){
+  $("btQuitarLugar").textContent=quitarArmado?"¿Seguro? Toca de nuevo para quitarlo":"Quitar este lugar";
+}
+$("btQuitarLugar").addEventListener("click",()=>{
+  const l=L();if(!l)return;
+  if(!quitarArmado){
+    quitarArmado=true;pintarQuitar();
+    aviso("Se quitará con sus "+l.espacios.length+" espacios");
+    clearTimeout(quitarT);quitarT=setTimeout(()=>{quitarArmado=false;pintarQuitar()},3200);
+    return;
+  }
+  clearTimeout(quitarT);quitarArmado=false;pintarQuitar();
+  E.lugares=E.lugares.filter(x=>x.id!==l.id);
+  guardar();
+  $("inpBusca").value=""; /* que el regreso muestre la biblioteca completa */
+  volver();
+  aviso("Lugar quitado de la biblioteca");
+});
+
+/* ============ EL CÓDIGO DEL LUGAR (QR) ============ */
+function ligaDe(l){return APP_BASE+encodeURIComponent(l.codigo)}
+function pintarCodigo(){
+  const l=L();if(!l)return;
+  if(document.activeElement!==$("codigoLugar"))$("codigoLugar").value=l.codigo;
+  $("ligaLugar").textContent=ligaDe(l);
+  pintarQR($("qrLugar"),ligaDe(l),8);
+}
+$("codigoLugar").addEventListener("input",()=>{
+  const l=L();if(!l)return;
+  const limpio=slugCodigo($("codigoLugar").value);
+  l.codigo=codigoUnico(limpio,l.id);l.codMan=true;
+  $("ligaLugar").textContent=ligaDe(l);
+  pintarQR($("qrLugar"),ligaDe(l),8);
+  guardar();
+});
+$("codigoLugar").addEventListener("blur",()=>{
+  const l=L();if(!l)return;
+  if(!$("codigoLugar").value.trim()){l.codMan=false;l.codigo=codigoUnico(slugCodigo(l.nombre),l.id);guardar()}
+  pintarCodigo();
+});
+$("btLiga").addEventListener("click",async()=>{
+  const l=L();if(!l)return;
+  try{await navigator.clipboard.writeText(ligaDe(l));aviso("Liga copiada — es la que abre el visitante")}
+  catch(e){aviso("No se pudo copiar")}
+});
+$("btQR").addEventListener("click",()=>{
+  const l=L();if(!l)return;
+  const c=document.createElement("canvas");
+  pintarQR(c,ligaDe(l),24,4); /* grande y con zona de silencio para imprimir */
+  c.toBlob(b=>{
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(b);
+    a.download="sona-qr-"+l.codigo.toLowerCase()+".png";
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  });
+  aviso("QR descargado — imprímelo en la entrada");
+});
 
 /* ============ EL ACTA (export JSON, formato de la app) ============ */
 function acta(){
+  const l=L();if(!l)return "";
   return JSON.stringify({
-    lugar:E.lugar,
+    lugar:l.nombre,
+    codigo:l.codigo,
+    liga:ligaDe(l),
     medicion:{
-      consultor:E.consultor||"equipo SONA",
+      consultor:l.consultor||"equipo SONA",
       fecha:new Date().toISOString(),
     },
-    espacios:E.espacios.map(e=>({
+    espacios:l.espacios.map(e=>({
       id:e.id,nom:e.nom,mood:e.mood,
       est:{sonido:[e.son,NIVEL.sonido[e.son-1]],luz:[e.luz,NIVEL.luz[e.luz-1]],gente:[e.gen,NIVEL.gente[e.gen-1]]},
       como:e.como,llena:!!e.llena,bancas:!!e.bancas,
@@ -501,6 +819,219 @@ async function copiarActa(){
 }
 $("btActa").addEventListener("click",copiarActa);
 $("btCopiar").addEventListener("click",copiarActa);
+
+/* ============ QR (modo byte, corrección M, versiones 1-10) ============
+   Generador autocontenido; verificado contra decodificador externo. */
+function qrMatriz(texto){
+  const datos=new TextEncoder().encode(texto);
+  const TABLA=[null,
+    [10,[1,16]], [16,[1,28]], [26,[1,44]], [18,[2,32]], [24,[2,43]],
+    [16,[4,27]], [18,[4,31]], [22,[2,38],[2,39]], [22,[3,36],[2,37]], [26,[4,43],[1,44]],
+  ];
+  const ALINEA=[null,[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50]];
+  let ver=0,capacidad=0;
+  for(let v=1;v<=10;v++){
+    const t=TABLA[v];let dc=0;
+    for(let g=1;g<t.length;g++)dc+=t[g][0]*t[g][1];
+    const bitsLen=v<10?8:16;
+    const cap=Math.floor((dc*8-4-bitsLen)/8);
+    if(datos.length<=cap){ver=v;capacidad=dc;break}
+  }
+  if(!ver)return null;
+  const talla=17+4*ver;
+  const bits=[];
+  const mete=(val,n)=>{for(let i=n-1;i>=0;i--)bits.push((val>>>i)&1)};
+  mete(4,4);
+  mete(datos.length,ver<10?8:16);
+  datos.forEach(b=>mete(b,8));
+  const totalBits=capacidad*8;
+  for(let i=0;i<4&&bits.length<totalBits;i++)bits.push(0);
+  while(bits.length%8)bits.push(0);
+  const rellenos=[0xEC,0x11];
+  for(let i=0;bits.length<totalBits;i++)mete(rellenos[i%2],8);
+  const palabras=[];
+  for(let i=0;i<bits.length;i+=8){
+    let b=0;for(let j=0;j<8;j++)b=(b<<1)|bits[i+j];
+    palabras.push(b);
+  }
+  /* Reed-Solomon en GF(256), polinomio 0x11D */
+  const EXP=new Array(512),LOG=new Array(256);
+  for(let i=0,x=1;i<255;i++){EXP[i]=x;LOG[x]=i;x<<=1;if(x&0x100)x^=0x11D}
+  for(let i=255;i<512;i++)EXP[i]=EXP[i-255];
+  const mul=(a,b)=>(a&&b)?EXP[LOG[a]+LOG[b]]:0;
+  function generadorRS(n){
+    let g=[1]; /* coeficientes en grado ascendente */
+    for(let i=0;i<n;i++){
+      const ng=new Array(g.length+1).fill(0);
+      for(let j=0;j<g.length;j++){
+        ng[j]^=mul(g[j],EXP[i]);
+        ng[j+1]^=g[j];
+      }
+      g=ng;
+    }
+    return g;
+  }
+  function eccDe(bloque,nEc){
+    const g=generadorRS(nEc);
+    const resto=new Array(nEc).fill(0);
+    for(const b of bloque){
+      const f=b^resto.shift();
+      resto.push(0);
+      for(let i=0;i<nEc;i++)resto[i]^=mul(g[nEc-1-i],f);
+    }
+    return resto;
+  }
+  const t=TABLA[ver],nEc=t[0];
+  const bloques=[];let pos=0;
+  for(let g=1;g<t.length;g++)for(let b=0;b<t[g][0];b++){
+    const datosB=palabras.slice(pos,pos+t[g][1]);pos+=t[g][1];
+    bloques.push({d:datosB,e:eccDe(datosB,nEc)});
+  }
+  const serie=[];
+  const maxD=Math.max(...bloques.map(b=>b.d.length));
+  for(let i=0;i<maxD;i++)for(const b of bloques)if(i<b.d.length)serie.push(b.d[i]);
+  for(let i=0;i<nEc;i++)for(const b of bloques)serie.push(b.e[i]);
+  /* matriz y patrones funcionales */
+  const M=Array.from({length:talla},()=>new Array(talla).fill(0));
+  const F=Array.from({length:talla},()=>new Array(talla).fill(false));
+  const pon=(x,y,v)=>{M[y][x]=v?1:0;F[y][x]=true};
+  function buscador(cx,cy){
+    for(let dy=-4;dy<=4;dy++)for(let dx=-4;dx<=4;dx++){
+      const x=cx+dx,y=cy+dy;
+      if(x<0||y<0||x>=talla||y>=talla)continue;
+      const d=Math.max(Math.abs(dx),Math.abs(dy));
+      pon(x,y,d!==2&&d!==4);
+    }
+  }
+  buscador(3,3);buscador(talla-4,3);buscador(3,talla-4);
+  for(let i=0;i<talla;i++){
+    if(!F[6][i])pon(i,6,i%2===0);
+    if(!F[i][6])pon(6,i,i%2===0);
+  }
+  const al=ALINEA[ver],nAl=al.length;
+  for(let i=0;i<nAl;i++)for(let j=0;j<nAl;j++){
+    if((i===0&&j===0)||(i===0&&j===nAl-1)||(i===nAl-1&&j===0))continue;
+    const cy=al[i],cx=al[j];
+    for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){
+      const d=Math.max(Math.abs(dx),Math.abs(dy));
+      pon(cx+dx,cy+dy,d!==1);
+    }
+  }
+  for(let i=0;i<=8;i++){
+    if(!F[8][i])pon(i,8,0);
+    if(!F[i][8])pon(8,i,0);
+    if(i<8){
+      if(!F[8][talla-1-i])pon(talla-1-i,8,0);
+      if(!F[talla-1-i][8])pon(8,talla-1-i,0);
+    }
+  }
+  pon(8,talla-8,1);
+  if(ver>=7){
+    let rem=ver;
+    for(let i=0;i<12;i++)rem=(rem<<1)^((rem>>>11)*0x1F25);
+    const vb=(ver<<12)|rem;
+    for(let i=0;i<18;i++){
+      const bit=(vb>>>i)&1;
+      const a=talla-11+i%3,b=Math.floor(i/3);
+      pon(a,b,bit);pon(b,a,bit);
+    }
+  }
+  /* datos en zigzag */
+  let i2=0;
+  for(let der=talla-1;der>=1;der-=2){
+    if(der===6)der=5;
+    for(let v=0;v<talla;v++){
+      for(let j=0;j<2;j++){
+        const x=der-j;
+        const sube=((der+1)&2)===0;
+        const y=sube?talla-1-v:v;
+        if(!F[y][x]&&i2<serie.length*8){
+          M[y][x]=(serie[i2>>>3]>>>(7-(i2&7)))&1;
+          i2++;
+        }
+      }
+    }
+  }
+  /* máscara con menor penalización */
+  const MASC=[
+    (x,y)=>(x+y)%2===0,(x,y)=>y%2===0,(x,y)=>x%3===0,(x,y)=>(x+y)%3===0,
+    (x,y)=>(Math.floor(x/3)+Math.floor(y/2))%2===0,
+    (x,y)=>(x*y)%2+(x*y)%3===0,
+    (x,y)=>((x*y)%2+(x*y)%3)%2===0,
+    (x,y)=>((x+y)%2+(x*y)%3)%2===0,
+  ];
+  function aplicaMascara(m){
+    for(let y=0;y<talla;y++)for(let x=0;x<talla;x++)
+      if(!F[y][x]&&MASC[m](x,y))M[y][x]^=1;
+  }
+  function formato(mascara){
+    const dato=mascara; /* nivel M = bits 00 */
+    let rem=dato;
+    for(let i=0;i<10;i++)rem=(rem<<1)^((rem>>>9)*0x537);
+    const bitsF=((dato<<10)|rem)^0x5412;
+    const bitF=i=>(bitsF>>>i)&1;
+    for(let i=0;i<=5;i++){M[i][8]=bitF(i)}
+    M[7][8]=bitF(6);M[8][8]=bitF(7);M[8][7]=bitF(8);
+    for(let i=9;i<15;i++)M[8][14-i]=bitF(i);
+    for(let i=0;i<8;i++)M[8][talla-1-i]=bitF(i);
+    for(let i=8;i<15;i++)M[talla-15+i][8]=bitF(i);
+  }
+  function penal(){
+    let p=0;
+    const linea=leer=>{
+      let corre=1,prev=leer(0);
+      for(let i=1;i<talla;i++){
+        const c=leer(i);
+        if(c===prev){corre++;if(corre===5)p+=3;else if(corre>5)p++}
+        else{corre=1;prev=c}
+      }
+    };
+    for(let y=0;y<talla;y++)linea(x=>M[y][x]);
+    for(let x=0;x<talla;x++)linea(y=>M[y][x]);
+    for(let y=0;y<talla-1;y++)for(let x=0;x<talla-1;x++){
+      const c=M[y][x];
+      if(c===M[y][x+1]&&c===M[y+1][x]&&c===M[y+1][x+1])p+=3;
+    }
+    const P1=[1,0,1,1,1,0,1,0,0,0,0],P2=[0,0,0,0,1,0,1,1,1,0,1];
+    const busca=leer=>{
+      for(let i=0;i<=talla-11;i++){
+        let a=true,b=true;
+        for(let j=0;j<11;j++){
+          if(leer(i+j)!==P1[j])a=false;
+          if(leer(i+j)!==P2[j])b=false;
+        }
+        if(a||b)p+=40;
+      }
+    };
+    for(let y=0;y<talla;y++)busca(x=>M[y][x]);
+    for(let x=0;x<talla;x++)busca(y=>M[y][x]);
+    let oscuros=0;
+    for(let y=0;y<talla;y++)for(let x=0;x<talla;x++)oscuros+=M[y][x];
+    p+=10*Math.floor(Math.abs(oscuros*100/(talla*talla)-50)/5);
+    return p;
+  }
+  let mejor=0,mejorP=Infinity;
+  for(let m=0;m<8;m++){
+    aplicaMascara(m);formato(m);
+    const p=penal();
+    if(p<mejorP){mejorP=p;mejor=m}
+    aplicaMascara(m);
+  }
+  aplicaMascara(mejor);formato(mejor);
+  return M;
+}
+
+function pintarQR(canvas,texto,esc,silencio=0){
+  const m=qrMatriz(texto);
+  if(!m){canvas.width=canvas.height=1;return}
+  const talla=m.length,total=(talla+2*silencio)*esc;
+  canvas.width=canvas.height=total;
+  const ctx=canvas.getContext("2d");
+  ctx.fillStyle="#eceee9";ctx.fillRect(0,0,total,total);
+  ctx.fillStyle="#0e1013";
+  for(let y=0;y<talla;y++)for(let x=0;x<talla;x++)
+    if(m[y][x])ctx.fillRect((x+silencio)*esc,(y+silencio)*esc,esc,esc);
+}
 
 /* ============ LA ONDA DEL LUGAR (mismo shader de la app) ============ */
 const VS=`attribute vec2 aPos; void main(){ gl_Position=vec4(aPos,0.0,1.0); }`;
@@ -606,12 +1137,14 @@ void main(){ mainImage(gl_FragColor, gl_FragCoord.xy); }`;
   const inicio=performance.now();
   const vis={son:.3,luz:.3,gen:.3,r:1,g:1,b:1,mez:0};
   function objetivo(){
+    const l=L();
+    if(!l)return {son:.25,luz:.3,gen:.2,tinte:[1,1,1],mezcla:0};
     if(abierto){
-      const e=E.espacios.find(x=>x.id===abierto);
+      const e=l.espacios.find(x=>x.id===abierto);
       if(e)return {son:e.son/3,luz:e.luz/3,gen:e.gen/3,
                    tinte:hexRgb(MUNDOS[e.mood].a2),mezcla:.8};
     }
-    const p=promedios();
+    const p=promediosDe(l);
     return {son:p.son,luz:p.luz,gen:p.gen,tinte:[1,1,1],mezcla:0};
   }
   function cuadro(){
@@ -631,8 +1164,8 @@ void main(){ mainImage(gl_FragColor, gl_FragCoord.xy); }`;
 })();
 
 /* ============ arranque ============ */
-pintarEspacios();
-pintarLectura();
+teñir("Calmado");
+pintarBiblio();
 </script>
 </body>
 </html>

@@ -7,17 +7,17 @@ El principio rector en todo el sistema: **medición, no decoración** — cada c
 ## El ecosistema (tres superficies, un ciclo)
 
 ```
-  el consultor mide  ──▶  PANEL (sona-panel.html)  ──▶  acta JSON firmada
-                                                              │
-  el visitante vive  ◀──  APP (sona-app.html)  ◀──────────────┘
-  la identidad late  ◀──  INSTRUMENTO (index.html) — el logo como medición
+  el consultor mide ──▶ PANEL · biblioteca de lugares ──▶ acta JSON firmada + QR del lugar
+                                                                        │
+  el visitante escanea el código en la entrada ──▶ APP (?lugar=CÓDIGO) ◀┘
+  la identidad late ◀── INSTRUMENTO (index.html) — el logo como medición
 ```
 
 | Superficie | Archivo | Quién la usa | Qué hace |
 |---|---|---|---|
 | **El instrumento** | `index.html` | Equipo SONA / demos / instalación | El logotipo vivo que *representa* la medición (física blanda, etiqueta del análisis, exports) |
 | **La app del visitante** | `sona-app.html` | Visitantes del lugar (foco: neurodivergentes) | Lectura sensorial del lugar + elegir espacios según lo que prefieres evitar |
-| **El panel de consultoría** | `sona-panel.html` | Solo personal SONA (llenado del lugar) | Capturar espacios, climas y estímulos; firmar y exportar el acta |
+| **El panel de consultoría** | `sona-panel.html` | Solo personal SONA | Biblioteca de lugares: llenado de espacios, código QR por lugar, acta firmada |
 
 **En línea (GitHub Pages):**
 - App: https://cristobalguerra.github.io/sona/sona-app.html
@@ -54,13 +54,14 @@ Sin "tap", sin "motor", sin porcentajes sin unidad, sin contadores, **nada se re
 
 # El panel de consultoría (`sona-panel.html`)
 
-**Herramienta interna** del equipo SONA que hace la consultoría del lugar (capas 1–2 del llenado). Mismo lenguaje visual que la app (aurora, onda, vidrio).
+**Herramienta interna** del equipo SONA — la **biblioteca de lugares** de la consultoría (capas 1–2 del llenado). Mismo lenguaje visual que la app (aurora, onda, vidrio).
 
-- **Lectura del lugar**: nombre editable, clima agregado (el mood dominante tiñe la aurora), onda alimentada por los promedios reales de lo capturado.
-- **Espacios como tarjetas-acordeón**: nombre, clima (4 chips con su color — al elegir, toda la herramienta se retiñe en vivo), estímulos en palabras, cómo llegar (referencias visibles + tiempo a pie), señales (llena / bancas). Añadir y quitar espacios.
-- **El acta**: persiste en `localStorage` y se exporta como **JSON firmado** — `medicion: { consultor, fecha }` — con el formato exacto que consume la app. Esa firma es la cadena de confianza que la app muestra como "medido por el equipo SONA · hace X".
+- **Biblioteca (vista raíz)**: los lugares como tarjetas (punto del clima dominante, nº de espacios, chip del código), **buscador** que filtra por nombre o código (sin acentos ni mayúsculas; si no hay resultados ofrece dar de alta lo buscado) y **alta con +** (crea el lugar, entra y deja el nombre enfocado para escribirlo).
+- **Ficha del lugar**: lectura agregada (onda alimentada por los promedios reales; el clima dominante tiñe la aurora), espacios como tarjetas-acordeón (nombre, clima con 4 chips, estímulos en palabras, cómo llegar, señales llena/bancas), añadir y quitar espacios. Quitar el lugar entero pide **doble toque** (es destructivo).
+- **El código del lugar**: cada lugar tiene un código estable — auto-derivado del nombre (palabras completas, sin conectores, tope 14) y editable/anclable a mano — y su **QR**: la liga `sona-app.html?lugar=CÓDIGO` que el visitante escanea en la entrada para llegar a la lectura de ese lugar. Generador de QR **propio y embebido** (modo byte, corrección M, versiones 1–10, máscara por penalización; verificado contra el decodificador de OpenCV). Botones: copiar liga y descargar el PNG imprimible.
+- **El acta**: persiste en `localStorage` (`sona-panel-v2`, con migración automática desde el panel v1 de un solo lugar) y se exporta como **JSON firmado** — `codigo`, `liga` y `medicion: { consultor, fecha }` — con el formato que consume la app. Esa firma es la cadena de confianza que la app muestra como "medido por el equipo SONA · hace X".
 
-*Interno por diseño y declaración; si se despliega junto a la app pública necesitará una puerta real (auth o URL no listada).*
+*Pendiente de cableado: la app aún no lee `?lugar=` (trae MARCO horneado); el contrato de la liga ya queda definido desde el panel. Interno por diseño y declaración; si se despliega junto a la app pública necesitará una puerta real (auth o URL no listada).*
 
 ---
 
