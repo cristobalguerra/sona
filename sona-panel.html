@@ -113,6 +113,13 @@ body{
 }
 #nombreLugar:focus{outline:none;border-bottom-color:var(--hair)}
 #estadoLugar{font-family:var(--grot);font-weight:300;font-size:15px;color:var(--textoSuave)}
+#consultor{
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  background:none;border:none;border-bottom:1px solid transparent;
+  color:var(--textoSuave);width:100%;padding:8px 0 4px;transition:border-color .2s;
+}
+#consultor::placeholder{color:rgba(236,238,233,.3)}
+#consultor:focus{outline:none;border-bottom-color:var(--hair)}
 
 /* ---------- la ventana de espacios ---------- */
 #ventana{
@@ -258,7 +265,7 @@ body{
     <div class="cabecera">
       <span class="centro">
         <span class="marca">SONA</span>
-        <span class="sub">Panel del lugar</span>
+        <span class="sub">Consultoría · uso interno</span>
       </span>
       <button class="ctrl der" id="btActa" aria-label="Copiar el acta del lugar (JSON)">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -274,6 +281,7 @@ body{
         <span class="l">Lectura del lugar</span>
         <input id="nombreLugar" type="text" value="Museo MARCO" aria-label="Nombre del lugar">
         <div id="estadoLugar">—</div>
+        <input id="consultor" type="text" placeholder="¿Quién mide? (firma del acta)" aria-label="Consultor que firma la medición">
       </div>
     </div>
 
@@ -287,7 +295,7 @@ body{
       <button class="bt lleno" id="btCopiar" style="margin-top:14px">Copiar acta del lugar</button>
     </div>
 
-    <span class="pie">SONA · investigación en diseño · CRGS UDEM</span>
+    <span class="pie">Instrumento de llenado · equipo de consultoría SONA · CRGS UDEM</span>
   </div>
 
   <div id="aviso"></div>
@@ -329,6 +337,7 @@ function aviso(txt){
 const CLAVE="sona-panel-v1";
 const DEFAULT={
   lugar:"Museo MARCO",
+  consultor:"",
   espacios:[
     {id:"grabados",nom:"Sala de grabados",mood:"Calmado",son:1,luz:1,gen:1,
      como:"Desde la entrada, de frente y a la izquierda — unos 2 minutos caminando",llena:false,bancas:false},
@@ -468,12 +477,17 @@ $("btAgregar").addEventListener("click",()=>{
 /* nombre del lugar */
 $("nombreLugar").value=E.lugar;
 $("nombreLugar").addEventListener("input",()=>{E.lugar=$("nombreLugar").value;guardar()});
+$("consultor").value=E.consultor||"";
+$("consultor").addEventListener("input",()=>{E.consultor=$("consultor").value;guardar()});
 
 /* ============ EL ACTA (export JSON, formato de la app) ============ */
 function acta(){
   return JSON.stringify({
     lugar:E.lugar,
-    capturado:"panel SONA",
+    medicion:{
+      consultor:E.consultor||"equipo SONA",
+      fecha:new Date().toISOString(),
+    },
     espacios:E.espacios.map(e=>({
       id:e.id,nom:e.nom,mood:e.mood,
       est:{sonido:[e.son,NIVEL.sonido[e.son-1]],luz:[e.luz,NIVEL.luz[e.luz-1]],gente:[e.gen,NIVEL.gente[e.gen-1]]},
@@ -482,7 +496,7 @@ function acta(){
   },null,2);
 }
 async function copiarActa(){
-  try{await navigator.clipboard.writeText(acta());aviso("Acta copiada — pégala en la app")}
+  try{await navigator.clipboard.writeText(acta());aviso("Acta firmada y copiada — lista para la app")}
   catch(e){aviso("No se pudo copiar")}
 }
 $("btActa").addEventListener("click",copiarActa);
