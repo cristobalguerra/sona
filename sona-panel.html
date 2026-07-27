@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e1013">
+<title>SONA · Panel del lugar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&family=Hanken+Grotesk:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   SONA — PANEL DEL LUGAR (llenado, capas 1-2 del PRD)
+   El equipo/operador captura los espacios de un lugar con el
+   MISMO lenguaje de la app: aurora del mood, onda de lectura,
+   vidrio líquido, chrome de cabecera. Persiste en localStorage
+   y exporta el acta como JSON.
+   ============================================================ */
+:root{
+  --fondo:#0e1013;
+  --sup:#16191d;
+  --supBorde:rgba(236,238,233,.09);
+  --texto:#eceee9;
+  --textoSuave:rgba(236,238,233,.6);
+  --hair:rgba(236,238,233,.12);
+  --a1:#4a6b96;
+  --a2:#8fb2d9;
+  --mono:"Fragment Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --grot:"Hanken Grotesk", system-ui, sans-serif;
+  --grano:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overscroll-behavior:none}
+body{
+  font-family:var(--mono);color:var(--texto);
+  background:#08090b;
+  display:flex;align-items:center;justify-content:center;
+  -webkit-font-smoothing:antialiased;font-size:12px;line-height:1.5;
+}
+#app{
+  position:relative;width:100%;height:100dvh;overflow:hidden;
+  background:var(--fondo);touch-action:pan-y;
+}
+@media (min-width:560px){
+  #app{width:440px;height:min(900px,94vh);border-radius:38px;box-shadow:0 30px 90px rgba(0,0,0,.6)}
+}
+#app::after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:40;
+  background:var(--grano);background-size:220px 220px;opacity:.45;mix-blend-mode:overlay;
+}
+
+/* la aurora del mood (misma receta de la app) */
+#aurora{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.blob{position:absolute;border-radius:50%;filter:blur(70px);will-change:transform}
+.blob.b1{
+  width:130%;aspect-ratio:1;left:-20%;top:2%;
+  background:radial-gradient(circle at 45% 36%, var(--a2) 0%, var(--a1) 44%, transparent 70%);
+  opacity:.55;animation:resp1 18s ease-in-out infinite;
+}
+.blob.b2{
+  width:86%;aspect-ratio:1;right:-24%;top:30%;
+  background:radial-gradient(circle at 55% 45%, var(--a1) 0%, transparent 62%);
+  opacity:.4;animation:resp2 12s ease-in-out infinite;
+}
+@keyframes resp1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(4%,5%) scale(1.12)}}
+@keyframes resp2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-6%,-4%) scale(1.18)}}
+#aurora::after{content:"";position:absolute;inset:0;background:linear-gradient(to top, var(--fondo) 4%, transparent 46%)}
+
+/* ---------- la página (una sola, scrolleable) ---------- */
+#hoja{
+  position:absolute;inset:0;z-index:1;
+  padding:calc(18px + env(safe-area-inset-top)) 22px calc(26px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;gap:20px;
+  overflow-y:auto;overscroll-behavior:contain;
+}
+
+.cabecera{
+  position:sticky;top:0;z-index:6;flex:none;
+  display:grid;grid-template-columns:40px 1fr 40px;align-items:center;
+  margin:calc(-34px - env(safe-area-inset-top)) -22px 0;
+  padding:calc(32px + env(safe-area-inset-top)) 22px 14px;
+  background:transparent;
+}
+.cabecera .centro{grid-column:2;display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center}
+.cabecera .marca{
+  font-family:var(--grot);font-weight:300;
+  font-size:15px;letter-spacing:.46em;text-indent:.46em;
+  color:var(--texto);text-transform:uppercase;
+}
+.cabecera .sub{font-size:8px;letter-spacing:.26em;text-transform:uppercase;color:var(--textoSuave)}
+.cabecera .der{grid-column:3}
+
+.ctrl{
+  width:40px;height:40px;border-radius:50%;padding:0;
+  border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.05);color:var(--texto);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-family:var(--grot);font-size:16px;line-height:1;
+  transition:transform .18s cubic-bezier(.34,1.56,.5,1);
+}
+.ctrl:active{transform:scale(.9)}
+
+.micro{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--textoSuave);line-height:1.9}
+.l{font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--textoSuave)}
+
+/* ---------- lectura del lugar ---------- */
+#lectura{display:flex;flex-direction:column;gap:14px;flex:none}
+#ondaLugar{display:block;width:100%;height:96px}
+#nombreLugar{
+  font-family:var(--grot);font-weight:200;font-size:34px;line-height:1.1;letter-spacing:-.02em;
+  background:none;border:none;color:var(--texto);width:100%;padding:2px 0;
+  border-bottom:1px solid transparent;transition:border-color .2s;
+}
+#nombreLugar:focus{outline:none;border-bottom-color:var(--hair)}
+#estadoLugar{font-family:var(--grot);font-weight:300;font-size:15px;color:var(--textoSuave)}
+
+/* ---------- la ventana de espacios ---------- */
+#ventana{
+  display:flex;flex-direction:column;
+  margin:4px 0 0;
+  background:rgba(8,9,11,.62);border-radius:26px;
+  border:1px solid var(--supBorde);
+  -webkit-backdrop-filter:blur(26px) saturate(1.3);backdrop-filter:blur(26px) saturate(1.3);
+  padding:22px 20px 20px;
+  box-shadow:0 18px 50px rgba(0,0,0,.4);
+}
+.ventanaCab{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.ventanaCab .t{font-size:11px;letter-spacing:.22em;text-transform:uppercase}
+
+/* tarjeta de espacio (vidrio líquido, como la app) */
+.esp{
+  border:1px solid rgba(255,255,255,.09);border-radius:20px;
+  background:linear-gradient(135deg,rgba(255,255,255,.055),rgba(255,255,255,.015) 55%,rgba(255,255,255,.035));
+  -webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 8px 22px rgba(0,0,0,.16);
+  margin:9px 0;overflow:hidden;
+}
+.esp .fila{
+  display:flex;align-items:center;gap:14px;padding:16px 18px;cursor:pointer;
+}
+.esp .fila:active{opacity:.8}
+.esp .pun{width:10px;height:10px;border-radius:50%;flex:none}
+.esp .info{flex:1;min-width:0}
+.esp .nom{font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.esp .cli{font-family:var(--grot);font-weight:300;font-size:13px;color:var(--textoSuave);margin-top:4px}
+.esp .flecha{color:var(--textoSuave);font-family:var(--grot);transition:transform .3s}
+.esp.abierto .flecha{transform:rotate(90deg)}
+
+/* el editor desplegado */
+.editor{display:none;flex-direction:column;gap:16px;padding:2px 18px 18px;border-top:1px solid var(--hair)}
+.esp.abierto .editor{display:flex}
+.editor .campo{display:flex;flex-direction:column;gap:8px;padding-top:14px}
+.editor input[type=text], .editor textarea{
+  font-family:var(--mono);font-size:12px;letter-spacing:.04em;line-height:1.6;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);border-radius:12px;
+  color:var(--texto);padding:11px 13px;width:100%;resize:vertical;
+}
+.editor input:focus,.editor textarea:focus{outline:none;border-color:rgba(255,255,255,.24)}
+
+/* selector de clima: 4 chips con su color */
+.climas{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.climaChip{
+  display:flex;align-items:center;gap:9px;
+  font-family:var(--grot);font-weight:300;font-size:13px;color:var(--textoSuave);
+  border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:10px 12px;
+  background:transparent;cursor:pointer;transition:all .15s;
+}
+.climaChip .pun{width:9px;height:9px;border-radius:50%}
+.climaChip.on{
+  color:var(--texto);
+  border-color:color-mix(in srgb,var(--cc) 45%,transparent);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--cc) 20%,transparent),color-mix(in srgb,var(--cc) 8%,transparent));
+}
+
+/* niveles 1-3 por estímulo: pills con palabra */
+.nivFila{display:grid;grid-template-columns:64px 1fr;align-items:center;gap:10px}
+.nivFila .k{font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--textoSuave)}
+.nivOpc{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.nivOpc button{
+  font-family:var(--grot);font-weight:300;font-size:12px;color:var(--textoSuave);
+  border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:8px 4px;
+  background:transparent;cursor:pointer;transition:all .15s;
+}
+.nivOpc button.on{
+  color:var(--texto);
+  border-color:color-mix(in srgb,var(--a2) 42%,transparent);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--a2) 18%,transparent),color-mix(in srgb,var(--a1) 8%,transparent));
+}
+
+/* toggles llena/bancas */
+.flags{display:flex;gap:8px;flex-wrap:wrap}
+.flag{
+  font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  border:1px solid rgba(255,255,255,.10);border-radius:999px;padding:9px 14px;
+  background:transparent;color:var(--textoSuave);cursor:pointer;transition:all .15s;
+}
+.flag.on{
+  color:var(--texto);
+  border-color:color-mix(in srgb,var(--a2) 40%,transparent);
+  background:color-mix(in srgb,var(--a2) 14%,transparent);
+}
+
+.quitar{
+  align-self:flex-end;font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:rgba(236,120,110,.75);
+  background:none;border:none;cursor:pointer;padding:6px 0 0;
+}
+
+/* botones */
+.bt{
+  font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  border:1px solid rgba(255,255,255,.10);border-radius:999px;
+  background:linear-gradient(135deg,rgba(255,255,255,.05),rgba(255,255,255,.012) 60%,rgba(255,255,255,.03));
+  -webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16);
+  color:var(--texto);min-height:46px;padding:0 18px;cursor:pointer;width:100%;
+  transition:transform .18s cubic-bezier(.34,1.56,.5,1);
+}
+.bt:active{transform:scale(.965)}
+.bt.lleno{
+  background:linear-gradient(135deg,
+    color-mix(in srgb,var(--a2) 22%,transparent),
+    color-mix(in srgb,var(--a1) 10%,transparent) 60%,
+    color-mix(in srgb,var(--a2) 14%,transparent));
+  border-color:color-mix(in srgb,var(--a2) 30%,transparent);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 8px 24px color-mix(in srgb,var(--a1) 16%,transparent);
+}
+
+.pie{
+  font-family:var(--mono);font-size:7.5px;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(236,238,233,.32);align-self:center;padding:10px 16px 0;
+}
+
+/* aviso */
+#aviso{
+  position:absolute;left:50%;bottom:24px;transform:translate(-50%,10px);
+  background:var(--texto);color:var(--fondo);border-radius:999px;
+  font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  padding:10px 20px;opacity:0;transition:opacity .3s,transform .3s;
+  pointer-events:none;white-space:nowrap;z-index:50;max-width:92%;
+  overflow:hidden;text-overflow:ellipsis;
+}
+#aviso.ver{opacity:1;transform:translate(-50%,0)}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="aurora" aria-hidden="true">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+  </div>
+
+  <div id="hoja">
+    <div class="cabecera">
+      <span class="centro">
+        <span class="marca">SONA</span>
+        <span class="sub">Panel del lugar</span>
+      </span>
+      <button class="ctrl der" id="btActa" aria-label="Copiar el acta del lugar (JSON)">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 15V4"/><path d="m7 9 5-5 5 5"/><path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- la lectura del lugar (agregada de sus espacios) -->
+    <div id="lectura">
+      <canvas id="ondaLugar" aria-hidden="true"></canvas>
+      <div>
+        <span class="l">Lectura del lugar</span>
+        <input id="nombreLugar" type="text" value="Museo MARCO" aria-label="Nombre del lugar">
+        <div id="estadoLugar">—</div>
+      </div>
+    </div>
+
+    <!-- los espacios -->
+    <div id="ventana">
+      <div class="ventanaCab">
+        <span class="t">Espacios</span>
+        <button class="ctrl" id="btAgregar" aria-label="Añadir espacio">+</button>
+      </div>
+      <div id="listaEsp"></div>
+      <button class="bt lleno" id="btCopiar" style="margin-top:14px">Copiar acta del lugar</button>
+    </div>
+
+    <span class="pie">SONA · investigación en diseño · CRGS UDEM</span>
+  </div>
+
+  <div id="aviso"></div>
+</div>
+
+<script>
+const rm=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const $=id=>document.getElementById(id);
+
+/* ============ MUNDOS (los mismos de la app) ============ */
+const MUNDOS={
+  Calmado:{a1:"#4a6b96",a2:"#8fb2d9"},
+  Equilibrado:{a1:"#4d7a5d",a2:"#9fc4a5"},
+  Activo:{a1:"#b07a2e",a2:"#e8b56b"},
+  Concurrido:{a1:"#b25330",a2:"#e8895a"},
+};
+const CLIMA_PALABRA={Calmado:"Tranquila",Equilibrado:"Normal",Activo:"Con movimiento",Concurrido:"Llena ahora"};
+const CLIMA_LUGAR={Calmado:"Tranquilo",Equilibrado:"Normal",Activo:"Con movimiento",Concurrido:"Lleno"};
+const NIVEL={
+  sonido:["bajo","medio","alto"],
+  luz:["suave","natural","brillante"],
+  gente:["poca","algo","mucha"],
+};
+const EST_NOMBRE={sonido:"Sonido",luz:"Luz",gente:"Gente"};
+
+function teñir(nombre){
+  const m=MUNDOS[nombre],r=document.documentElement.style;
+  r.setProperty("--a1",m.a1);r.setProperty("--a2",m.a2);
+}
+function hexRgb(h){return [1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255)}
+
+let avisoT;
+function aviso(txt){
+  const a=$("aviso");a.textContent=txt;a.classList.add("ver");
+  clearTimeout(avisoT);avisoT=setTimeout(()=>a.classList.remove("ver"),2200);
+}
+
+/* ============ ESTADO (persistente) ============ */
+const CLAVE="sona-panel-v1";
+const DEFAULT={
+  lugar:"Museo MARCO",
+  espacios:[
+    {id:"grabados",nom:"Sala de grabados",mood:"Calmado",son:1,luz:1,gen:1,
+     como:"Desde la entrada, de frente y a la izquierda — unos 2 minutos caminando",llena:false,bancas:false},
+    {id:"mezzanine",nom:"Mezzanine",mood:"Equilibrado",son:2,luz:2,gen:2,
+     como:"Sube por la escalera central; está justo arriba del vestíbulo — 1 minuto",llena:false,bancas:false},
+    {id:"principal",nom:"Sala principal",mood:"Concurrido",son:3,luz:3,gen:3,
+     como:"De frente hasta el fondo; la reconoces por el techo alto — 3 minutos",llena:true,bancas:false},
+    {id:"patio",nom:"Patio",mood:"Activo",son:2,luz:3,gen:2,
+     como:"A la derecha de la entrada, cruzando las puertas de cristal — 1 minuto",llena:false,bancas:true},
+  ],
+};
+let E;
+try{E=JSON.parse(localStorage.getItem(CLAVE))||structuredClone(DEFAULT)}
+catch(e){E=structuredClone(DEFAULT)}
+function guardar(){
+  localStorage.setItem(CLAVE,JSON.stringify(E));
+}
+
+/* ============ AGREGADO: la lectura del lugar ============ */
+let abierto=null; /* id del espacio en edición */
+function moodLugar(){
+  /* el clima del lugar = el mood dominante (empate → el más intenso) */
+  const orden=["Concurrido","Activo","Equilibrado","Calmado"];
+  const cuenta={};E.espacios.forEach(e=>cuenta[e.mood]=(cuenta[e.mood]||0)+1);
+  let mejor="Calmado",n=0;
+  orden.forEach(m=>{if((cuenta[m]||0)>n){n=cuenta[m];mejor=m}});
+  return mejor;
+}
+function promedios(){
+  const n=Math.max(1,E.espacios.length);
+  const s=E.espacios.reduce((a,e)=>({son:a.son+e.son,luz:a.luz+e.luz,gen:a.gen+e.gen}),{son:0,luz:0,gen:0});
+  return {son:s.son/n/3,luz:s.luz/n/3,gen:s.gen/n/3};
+}
+function pintarLectura(){
+  const m=abierto?E.espacios.find(e=>e.id===abierto)?.mood||moodLugar():moodLugar();
+  teñir(m);
+  $("estadoLugar").textContent=abierto
+    ? CLIMA_PALABRA[m]+" · editando espacio"
+    : CLIMA_LUGAR[moodLugar()]+" · "+E.espacios.length+" espacios";
+}
+
+/* ============ LA LISTA DE ESPACIOS ============ */
+function pintarEspacios(){
+  const cont=$("listaEsp");cont.innerHTML="";
+  E.espacios.forEach(e=>{
+    const card=document.createElement("div");
+    card.className="esp"+(abierto===e.id?" abierto":"");
+    let cli=CLIMA_PALABRA[e.mood];
+    if(e.llena&&e.mood!=="Concurrido")cli+=" · llena";
+    if(e.bancas)cli+=" · bancas";
+    card.innerHTML=`
+      <div class="fila" data-abre="${e.id}">
+        <span class="pun" style="background:${MUNDOS[e.mood].a2}"></span>
+        <span class="info"><span class="nom">${e.nom}</span><div class="cli">${cli}</div></span>
+        <span class="flecha">›</span>
+      </div>
+      <div class="editor">
+        <div class="campo">
+          <span class="l">Nombre del espacio</span>
+          <input type="text" value="${e.nom.replace(/"/g,'&quot;')}" data-campo="nom">
+        </div>
+        <div class="campo">
+          <span class="l">Clima</span>
+          <div class="climas">
+            ${Object.keys(MUNDOS).map(m=>`
+              <button class="climaChip${e.mood===m?" on":""}" data-mood="${m}" style="--cc:${MUNDOS[m].a2}">
+                <span class="pun" style="background:${MUNDOS[m].a2}"></span>${CLIMA_PALABRA[m]}
+              </button>`).join("")}
+          </div>
+        </div>
+        <div class="campo">
+          <span class="l">Estímulos</span>
+          ${["son","luz","gen"].map((k,ki)=>{
+            const est=["sonido","luz","gente"][ki];
+            return `<div class="nivFila">
+              <span class="k">${EST_NOMBRE[est]}</span>
+              <div class="nivOpc">
+                ${[1,2,3].map(n=>`<button class="${e[k]===n?"on":""}" data-niv="${k}:${n}">${NIVEL[est][n-1]}</button>`).join("")}
+              </div>
+            </div>`;
+          }).join("")}
+        </div>
+        <div class="campo">
+          <span class="l">Cómo llegar (referencias visibles, tiempo a pie)</span>
+          <textarea rows="2" data-campo="como">${e.como}</textarea>
+        </div>
+        <div class="campo">
+          <span class="l">Señales</span>
+          <div class="flags">
+            <button class="flag${e.llena?" on":""}" data-flag="llena">Llena ahora</button>
+            <button class="flag${e.bancas?" on":""}" data-flag="bancas">Tiene bancas</button>
+          </div>
+        </div>
+        <button class="quitar" data-quitar="${e.id}">Quitar este espacio</button>
+      </div>`;
+    /* interacciones */
+    card.querySelector("[data-abre]").addEventListener("click",()=>{
+      abierto=abierto===e.id?null:e.id;
+      pintarEspacios();pintarLectura();
+    });
+    card.querySelectorAll("[data-campo]").forEach(inp=>{
+      inp.addEventListener("input",()=>{e[inp.dataset.campo]=inp.value;guardar()});
+      inp.addEventListener("change",()=>{pintarEspacios();pintarLectura()});
+      inp.addEventListener("click",ev=>ev.stopPropagation());
+    });
+    card.querySelectorAll("[data-mood]").forEach(b=>{
+      b.addEventListener("click",()=>{e.mood=b.dataset.mood;guardar();pintarEspacios();pintarLectura();
+        aviso(e.nom+" → "+CLIMA_PALABRA[e.mood])});
+    });
+    card.querySelectorAll("[data-niv]").forEach(b=>{
+      b.addEventListener("click",()=>{
+        const [k,n]=b.dataset.niv.split(":");e[k]=+n;guardar();pintarEspacios();pintarLectura();
+      });
+    });
+    card.querySelectorAll("[data-flag]").forEach(b=>{
+      b.addEventListener("click",()=>{e[b.dataset.flag]=!e[b.dataset.flag];guardar();pintarEspacios()});
+    });
+    card.querySelector("[data-quitar]").addEventListener("click",()=>{
+      E.espacios=E.espacios.filter(x=>x.id!==e.id);abierto=null;
+      guardar();pintarEspacios();pintarLectura();
+      aviso("Espacio quitado");
+    });
+    cont.appendChild(card);
+  });
+}
+
+/* añadir espacio */
+$("btAgregar").addEventListener("click",()=>{
+  const n=E.espacios.length+1;
+  const id="espacio"+Date.now().toString(36);
+  E.espacios.push({id,nom:"Espacio "+n,mood:"Calmado",son:1,luz:1,gen:1,como:"",llena:false,bancas:false});
+  abierto=id;
+  guardar();pintarEspacios();pintarLectura();
+  aviso("Espacio añadido — captúralo");
+});
+
+/* nombre del lugar */
+$("nombreLugar").value=E.lugar;
+$("nombreLugar").addEventListener("input",()=>{E.lugar=$("nombreLugar").value;guardar()});
+
+/* ============ EL ACTA (export JSON, formato de la app) ============ */
+function acta(){
+  return JSON.stringify({
+    lugar:E.lugar,
+    capturado:"panel SONA",
+    espacios:E.espacios.map(e=>({
+      id:e.id,nom:e.nom,mood:e.mood,
+      est:{sonido:[e.son,NIVEL.sonido[e.son-1]],luz:[e.luz,NIVEL.luz[e.luz-1]],gente:[e.gen,NIVEL.gente[e.gen-1]]},
+      como:e.como,llena:!!e.llena,bancas:!!e.bancas,
+    })),
+  },null,2);
+}
+async function copiarActa(){
+  try{await navigator.clipboard.writeText(acta());aviso("Acta copiada — pégala en la app")}
+  catch(e){aviso("No se pudo copiar")}
+}
+$("btActa").addEventListener("click",copiarActa);
+$("btCopiar").addEventListener("click",copiarActa);
+
+/* ============ LA ONDA DEL LUGAR (mismo shader de la app) ============ */
+const VS=`attribute vec2 aPos; void main(){ gl_Position=vec4(aPos,0.0,1.0); }`;
+const FS=`precision highp float;
+uniform vec2 iResolution; uniform float iTime;
+uniform float uSon; uniform float uLuz; uniform float uGen;
+uniform vec3 uTinte; uniform float uMezcla;
+const float PI = 3.14159265359;
+const float AMPLITUDE=0.32; const float FREQ=1.1; const float ABER_FREQ=1.0;
+const float SPEED=2.4; const float WAVE_SCALE=0.6; const float ABERRATION=2.6;
+const float THICKNESS=3.0; const float INTENSITY=2.; const float FALLOFF=1.7;
+const float EDGE_MASK=0.4; const float EDGE_INSET=0.0; const float BAND_FILL=30000.0;
+const float BAND_THICK=0.08; const float SOFTNESS=2.5; const float LOW_AMP=6.0;
+const float LOW_INT=1.5; const float MID_ABER=0.8; const float MID_ABAMP=0.05;
+const float MID_SOFT=0.4; const float HIGH_ABER=0.5; const float HIGH_ABAMP=0.06;
+const float RESOLVED=1.0; const float UNRES_SCALE=0.14;
+vec3 spectral4(int s){
+    float x=float(s);
+    return clamp(vec3(abs(x-3.0)-1.0,2.0-abs(x-2.0),2.0-abs(x-4.0)),0.0,1.0);
+}
+void mainImage(out vec4 fragColor, in vec2 fragCoord){
+    vec2 R=iResolution.xy; float aspect=R.x/R.y;
+    vec2 p=(fragCoord+0.5)*2.0/R-1.0; p.x*=aspect;
+    float yScreen=p.y; p/=max(WAVE_SCALE,0.1);
+    float t=iTime*mix(0.45,1.6,uGen);
+    float low=clamp(0.45+0.45*sin(t*0.8)*sin(t*0.37+1.0),0.0,1.0)*uSon;
+    float mid=clamp(0.40+0.40*sin(t*1.7+2.0)*sin(t*0.53),0.0,1.0)*mix(uSon,uGen,0.5);
+    float high=clamp(0.30+0.30*sin(t*2.9+4.0)*sin(t*0.71+2.0),0.0,1.0)*uGen;
+    float res=clamp(RESOLVED,0.0,1.0);
+    float drift=mod(t,20.0*PI)*SPEED;
+    float xN=p.x/max(aspect,1.0);
+    float env=cos(PI*0.5*min(abs(0.9*xN),1.0)); env*=env;
+    float A1=AMPLITUDE*mix(0.35,1.1,uSon)+0.01*low*LOW_AMP;
+    float A2=A1+mid*MID_ABAMP+high*HIGH_ABAMP;
+    float AB=(ABERRATION+mid*MID_ABER+high*HIGH_ABER)*res*mix(0.18,1.6,uGen);
+    float th=mix(0.1,0.01*THICKNESS*mix(0.6,1.7,uLuz),res);
+    float inten=mix(0.1,0.01*(INTENSITY*mix(0.45,2.1,uLuz)+low*LOW_INT),res);
+    float soft=0.01*res*max(0.0,(SOFTNESS+mid*MID_SOFT)*mix(0.6,1.8,uLuz));
+    float dUnres=max(length(p)-mix(0.14,UNRES_SCALE,res),0.0);
+    float frq=FREQ*mix(0.7,1.6,uSon);
+    float yMain=A1*env*res*sin(p.x*frq+drift);
+    float bandFillTh=max(BAND_THICK,1e-4);
+    float bandAmt=1e-4*BAND_FILL*inten;
+    vec3 num=vec3(0.0),den=vec3(0.0);
+    for(int s=0;s<4;s++){
+        vec3 hue=mix(vec3(1.0),spectral4(s),res); den+=hue;
+        float ab=mix(-AB,AB,float(s)/3.0);
+        float yL=A2*env*res*sin(p.x*ABER_FREQ*mix(0.7,1.6,uSon)+drift+ab);
+        float d=mix(dUnres,abs(p.y-yL),res);
+        float lor=mix(1.0/(1.0+(0.02*d)*(0.02*d)),1.0,res);
+        float line=inten/(sqrt(d*d+soft*soft)+th);
+        float lo=min(yMain,yL),hi=max(yMain,yL);
+        float dBand=max(0.0,max(p.y-hi,lo-p.y));
+        float band=bandAmt/(dBand+bandFillTh);
+        num+=hue*lor*(line+band);
+    }
+    vec3 col=num/den;
+    float dM=mix(dUnres,abs(p.y-yMain),res);
+    float lorM=mix(1.0/(1.0+(0.02*dM)*(0.02*dM)),1.0,res);
+    float boost=(1.0-res)*(14.0*low+4.0);
+    col+=0.5*inten*(lorM+boost)/(sqrt(dM*dM+soft*soft)+th);
+    col=pow(max(col,0.0),vec3(1.5));
+    float emT=clamp((abs(yScreen)-1.0+EDGE_INSET)/(-max(EDGE_MASK,1e-4)),0.0,1.0);
+    float em=emT*emT*(3.0-2.0*emT);
+    float gauss=exp(-pow(xN*FALLOFF,2.0));
+    col*=mix(1.0,em*gauss,res); col*=res;
+    float lum=max(col.r,max(col.g,col.b));
+    col=mix(col,lum*uTinte,uMezcla);
+    float a=clamp(max(col.r,max(col.g,col.b)),0.0,1.0);
+    fragColor=vec4(col,a);
+}
+void main(){ mainImage(gl_FragColor, gl_FragCoord.xy); }`;
+
+(function(){
+  const canvas=$("ondaLugar");
+  const gl=canvas.getContext("webgl",{alpha:true,premultipliedAlpha:true});
+  if(!gl){canvas.style.display="none";return}
+  function compilar(tipo,src){
+    const sh=gl.createShader(tipo);gl.shaderSource(sh,src);gl.compileShader(sh);
+    if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS)){gl.deleteShader(sh);return null}
+    return sh;
+  }
+  const vs=compilar(gl.VERTEX_SHADER,VS),fs=compilar(gl.FRAGMENT_SHADER,FS);
+  if(!vs||!fs){canvas.style.display="none";return}
+  const prog=gl.createProgram();
+  gl.attachShader(prog,vs);gl.attachShader(prog,fs);gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+  const aPos=gl.getAttribLocation(prog,"aPos");
+  gl.enableVertexAttribArray(aPos);gl.vertexAttribPointer(aPos,2,gl.FLOAT,false,0,0);
+  const U=n=>gl.getUniformLocation(prog,n);
+  const uRes=U("iResolution"),uTime=U("iTime"),uSon=U("uSon"),uLuz=U("uLuz"),
+        uGen=U("uGen"),uTinte=U("uTinte"),uMezcla=U("uMezcla");
+  const ESCALA=Math.min(1.4,(window.devicePixelRatio||1)*0.7);
+  function medir(){
+    const r=canvas.getBoundingClientRect();
+    canvas.width=Math.max(1,Math.round(r.width*ESCALA));
+    canvas.height=Math.max(1,Math.round(r.height*ESCALA));
+    gl.viewport(0,0,canvas.width,canvas.height);
+  }
+  medir();
+  const inicio=performance.now();
+  const vis={son:.3,luz:.3,gen:.3,r:1,g:1,b:1,mez:0};
+  function objetivo(){
+    if(abierto){
+      const e=E.espacios.find(x=>x.id===abierto);
+      if(e)return {son:e.son/3,luz:e.luz/3,gen:e.gen/3,
+                   tinte:hexRgb(MUNDOS[e.mood].a2),mezcla:.8};
+    }
+    const p=promedios();
+    return {son:p.son,luz:p.luz,gen:p.gen,tinte:[1,1,1],mezcla:0};
+  }
+  function cuadro(){
+    const o=objetivo(),K=.05;
+    vis.son+=(o.son-vis.son)*K; vis.luz+=(o.luz-vis.luz)*K; vis.gen+=(o.gen-vis.gen)*K;
+    vis.r+=(o.tinte[0]-vis.r)*K; vis.g+=(o.tinte[1]-vis.g)*K; vis.b+=(o.tinte[2]-vis.b)*K;
+    vis.mez+=(o.mezcla-vis.mez)*K;
+    gl.uniform2f(uRes,canvas.width,canvas.height);
+    gl.uniform1f(uTime,(performance.now()-inicio)/1000);
+    gl.uniform1f(uSon,vis.son);gl.uniform1f(uLuz,vis.luz);gl.uniform1f(uGen,vis.gen);
+    gl.uniform3f(uTinte,vis.r,vis.g,vis.b);gl.uniform1f(uMezcla,vis.mez);
+    gl.drawArrays(gl.TRIANGLES,0,3);
+  }
+  if(rm){cuadro()}
+  else{(function loop(){cuadro();requestAnimationFrame(loop)})()}
+  addEventListener("resize",()=>{medir();if(rm)cuadro()});
+})();
+
+/* ============ arranque ============ */
+pintarEspacios();
+pintarLectura();
+</script>
+</body>
+</html>
