@@ -40,3 +40,16 @@ Instrumento sensible, calma crepuscular, precisión viva. Voz: técnica-poética
 - Estándar razonable: contraste AA (4.5:1) en textos del panel y de la etiqueta; verificar especialmente texto sobre gradientes.
 - `prefers-reduced-motion`: **pendiente de implementar** — la simulación debería ofrecer estado quieto (rampa congelada en la identidad o amplitudes a mínimo) cuando el usuario lo prefiera.
 - El significado nunca depende solo del color: los niveles se leen también como palabra (*mínima–plena*) y posición del marcador.
+
+
+## Superficies del sistema (actualización 2026-07-26)
+
+1. **El instrumento** (`index.html`) — registro brand: escenario + etiqueta; lo operan el equipo y las instalaciones.
+2. **La app del visitante** (`sona-app.html`) — registro product para el público del lugar. Usuario primario: el visitante sensorialmente sensible (espectro autista, TDAH, ansiedad sensorial, adultos mayores). Regla de arquitectura: **nada se registra jamás** — el anonimato es comportamiento, no promesa. PRD completo en `PRD-app.md`.
+3. **El panel de consultoría** (`sona-panel.html`) — herramienta interna: SOLO el personal SONA que hace la consultoría del lugar y el llenado (capas 1–2). Produce el **acta JSON firmada** (consultor + fecha) que alimenta la app; esa firma sostiene la frase de confianza del visitante ("medido por el equipo SONA · hace X").
+
+Modelo de servicio: consultoría de medición (capa 1) + re-medición periódica (capa 5) como ingreso recurrente; el llenado en 5 capas está descrito en `zona-llenado.html`.
+
+## Crédito
+
+Proyecto de **Juan Alberto Arias Castillo**, estudiante de la Maestría en Diseño Gráfico de la Universidad de Monterrey (UDEM) · Centro Roberto Garza Sada.

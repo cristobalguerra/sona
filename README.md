@@ -1,102 +1,121 @@
-# SONA · Sistema vivo — el logo como instrumento
+# SONA — el lugar, medido y habitable
 
-SONA mide 7 dimensiones de un lugar (p. ej. el lobby de un museo). Esta plataforma hace que la identidad **viva representando esa medición**: cada lectura conduce un comportamiento bien definido y determinista del logotipo — nada orgánico, nada aleatorio — y todas actúan a la vez. Archivo único (`index.html`), sin dependencias ni build.
+**SONA es un proyecto de investigación en diseño** de **Juan Alberto Arias Castillo** (Maestría en Diseño Gráfico, Universidad de Monterrey · Centro Roberto Garza Sada). Estudia cómo los estímulos de un lugar — el ruido, la luz, la cantidad de gente — moldean la experiencia de quienes lo habitan, y cómo comunicarlos con claridad para que cada persona (especialmente la sensorialmente sensible) recorra a su manera.
 
-## Las 7 dimensiones → 7 verbos visuales
-| Lectura (0–100) | Comportamiento determinista |
+El principio rector en todo el sistema: **medición, no decoración** — cada comportamiento visual, sonoro o de movimiento corresponde a una lectura nombrable y determinista. Nada aleatorio, nada que no signifique.
+
+## El ecosistema (tres superficies, un ciclo)
+
+```
+  el consultor mide  ──▶  PANEL (sona-panel.html)  ──▶  acta JSON firmada
+                                                              │
+  el visitante vive  ◀──  APP (sona-app.html)  ◀──────────────┘
+  la identidad late  ◀──  INSTRUMENTO (index.html) — el logo como medición
+```
+
+| Superficie | Archivo | Quién la usa | Qué hace |
+|---|---|---|---|
+| **El instrumento** | `index.html` | Equipo SONA / demos / instalación | El logotipo vivo que *representa* la medición (física blanda, etiqueta del análisis, exports) |
+| **La app del visitante** | `sona-app.html` | Visitantes del lugar (foco: neurodivergentes) | Lectura sensorial del lugar + elegir espacios según lo que prefieres evitar |
+| **El panel de consultoría** | `sona-panel.html` | Solo personal SONA (llenado del lugar) | Capturar espacios, climas y estímulos; firmar y exportar el acta |
+
+**En línea (GitHub Pages):**
+- App: https://cristobalguerra.github.io/sona/sona-app.html
+- Panel: https://cristobalguerra.github.io/sona/sona-panel.html
+- Instrumento: https://cristobalguerra.github.io/sona/
+
+Todo es HTML autocontenido, sin build ni dependencias. `sona-app-share.html` es el build de distribución de la app (variantes del logotipo, foto y fuentes incrustadas, ~345 KB).
+
+---
+
+# La app del visitante (`sona-app.html`)
+
+Diseñada tras un rediseño radical guiado por prueba con visitante primerizo — el flujo, los textos y los anti-patrones están documentados en **[`PRD-app.md`](PRD-app.md)** (objetivo, usuarios, flujos, criterios de aceptación y la lista de lo que no debe repetirse).
+
+## El flujo — "tres toques"
+1. **La puerta** — el lugar se presenta: logotipo estampado en el cielo (morph granulado perpetuo), la onda de lectura, la palabra del clima (*Tranquilo*), y el desbloqueo tipo iPhone (la capa sigue al dedo y sube sin fade).
+2. **La lectura + Para ti** — la onda del lugar, los 3 estímulos en palabras (chips de vidrio), y la lista de espacios **rankeada según lo que prefieres evitar**. Personalización sin preguntas: tres iconos tachables (oído = ruido, sol = luz, siluetas = gente) con interpretación escrita ("Evitar ruido · mucha gente").
+3. **La ficha del espacio** — su onda teñida de su clima, sus estímulos en palabras, foto en mirilla, cómo llegar caminando, y el **campo de flujo**: partículas-viento sobre el fondo desenfocado (gente = cantidad/prisa, sonido = turbulencia, luz = brillo, color = mood).
+
+## El sistema sensorial (todo conectado al clima)
+- **Aurora**: el mood como luz de fondo (loops exactos 18/12 s) — tiñe toda la app.
+- **Onda** (shader WebGL): tres canales ortogonales — sonido → vibración, luz → luminosidad, gente → hebras y deriva.
+- **Sonido** (Web Audio sintetizado, opt-in en "Escuchar lectura"): dron raíz+quinta afinado por clima, murmullo de ruido determinista (LCG), pulso del filtro al tempo del mood.
+- **Logotipo estampado**: hundido en el fondo (filtro de relieve invertido), con morph granulado letra-a-letra (3 s, salida retrasada — nunca huecos; turbulencia solo durante el pulso).
+- **Liquid glass**: chips, tarjetas y botones son vidrio real — blur del mundo detrás, filo especular, destello; sin rellenos de color.
+
+## Climas y palabras (nunca jerga interna en pantalla)
+`Calmado→Tranquilo/a · Equilibrado→Normal · Activo→Con movimiento · Concurrido→Lleno/Llena ahora` — niveles 1–3 por estímulo dichos en palabras (`bajo/medio/alto`, `suave/natural/brillante`, `poca/algo/mucha`).
+
+## Reglas duras (del test con visitante primerizo)
+Sin "tap", sin "motor", sin porcentajes sin unidad, sin contadores, **nada se registra jamás** (tocar = ver de cerca; cerrar la app es el cierre), predicciones siempre como cálculo con fuente y frescura, texto esencial ≥11 px, referencias visibles (nunca puntos cardinales). Lista completa en `PRD-app.md §8`.
+
+---
+
+# El panel de consultoría (`sona-panel.html`)
+
+**Herramienta interna** del equipo SONA que hace la consultoría del lugar (capas 1–2 del llenado). Mismo lenguaje visual que la app (aurora, onda, vidrio).
+
+- **Lectura del lugar**: nombre editable, clima agregado (el mood dominante tiñe la aurora), onda alimentada por los promedios reales de lo capturado.
+- **Espacios como tarjetas-acordeón**: nombre, clima (4 chips con su color — al elegir, toda la herramienta se retiñe en vivo), estímulos en palabras, cómo llegar (referencias visibles + tiempo a pie), señales (llena / bancas). Añadir y quitar espacios.
+- **El acta**: persiste en `localStorage` y se exporta como **JSON firmado** — `medicion: { consultor, fecha }` — con el formato exacto que consume la app. Esa firma es la cadena de confianza que la app muestra como "medido por el equipo SONA · hace X".
+
+*Interno por diseño y declaración; si se despliega junto a la app pública necesitará una puerta real (auth o URL no listada).*
+
+---
+
+# El instrumento (`index.html`) — el logo como medición
+
+La plataforma original del sistema vivo: el logotipo **vive representando la medición** de 7 dimensiones. Documentación completa del sistema visual en [`DESIGN.md`](DESIGN.md) y contexto estratégico en [`PRODUCT.md`](PRODUCT.md).
+
+## Las 7 dimensiones → verbos visuales
+| Lectura | Comportamiento determinista |
 |---|---|
-| **Luz** | Peso de la tinta: oscuro = masa densa (+22% área), luminoso = trazo ligero (−22%) — la conservación de área acompaña vía dA/dn precomputado |
-| **Pausa** | Tempo global del reloj físico (mucha pausa = casi inmóvil) |
-| **Sonido** | Pulso: latido radial sinusoidal (~9.5 s por ciclo real), amplitud = nivel |
-| **Visual** | Tensión de fusión σ (más estímulo = silueta más fundida) |
-| **Orientación** | Cizalla estática: mala orientación = la masa se ladea |
-| **Flujo** | Onda de compresión sinusoidal viajera, solo horizontal (λ=340 u) |
-| **Materia** | Rugosidad periódica del contorno (grano por la normal, λ≈45 u) |
+| **Luz** | Peso de la tinta (área ±22%, conservación acompañada) |
+| **Pausa** | Tempo global del reloj físico |
+| **Sonido** | Pulso radial sinusoidal |
+| **Visual** | Tensión de fusión σ de la silueta |
+| **Orientación** | Cizalla / congruencia del movimiento |
+| **Flujo** | Onda de compresión viajera horizontal |
+| **Materia** | Rugosidad periódica del contorno |
 
-Los canales del esqueleto (orientación, flujo, sonido) y del contorno (luz, materia) se superponen; la **mezcla** es la ganancia global del instrumento y las 7 lecturas son manuales hoy (sliders) y sensores mañana: `SONA.leer("luz",72)` / `SONA.lecturas()`. Con todas las lecturas en 0 el instrumento duerme en su identidad exacta. Los materiales V1–V5 fueron reemplazados por este sistema (base física única BASE_FIS, temperamento slime). El ruido simplex se eliminó por completo.
+## Vistas
+- **Etiqueta** (default): la ficha del análisis — cielo del mood con la palabra viva de la biblioteca tipográfica (vidrio líquido, partitura de 8 compases), índice del lugar, estado clasificado (7 moods por prototipos L1, español), medidores, descripción y firma de niveles. Exports PNG / SVG / MP4 vertical en paridad total.
+- **Tipografía**: la biblioteca de flancos — s·o·n·a en 4 estados por letra (16 SVGs en `/variantes`, cajas 200×200), ranuras fijas, texto del usuario, exports por compás.
 
-## Piezas (el universo de la marca)
-Selector **00 Pieza**: el logotipo + tres formas básicas, cada una un cuerpo independiente con exactamente los mismos parámetros físicos (material, mezcla, tempo, fusión — todo compartido):
-- **SONA** — wordmark 950×200 (70 nodos, 485 puntos).
-- **● Círculo** — r100 en lienzo 400×400 (20 nodos).
-- **■ Cuadrado** — 200×200, esquinas R25 (28 nodos).
-- **▲ Triángulo** — equilátero h200, esquinas R25 (15 nodos).
-La geometría de cada pieza se construye con la misma fábrica (remuestreo 9 u, siembra en retícula de módulo 50, tejido por dentro de la tinta) y se cachea. Los previews de material, exports y retícula siguen a la pieza activa; los archivos exportados llevan el id de la pieza en el nombre.
+## Motor de física blanda (histórico técnico, vigente en el instrumento)
+- **Esqueleto blando** (~608 nodos sembrados en la tinta, ~1900 muelles de cohesión) + **contorno** (~485 puntos, skinning gaussiano, restricciones: distancia, laplaciano de la desviación, anti-deriva, conservación de área). Salida siempre vectorial (Catmull-Rom → Bézier).
+- **Constantes protegidas**: radio 25 u · módulo 50 u · lienzo 950×200 u. El reposo ES el vector maestro (residual < 0.1 u).
+- Niveles 1–5 por dimensión; **loops exactos de 5 s** (armónicos enteros, costura invisible verificada); rampa narrativa de 6 s identidad→distorsión; `prefers-reduced-motion` congela en la identidad.
+- Coalescencia (menisco por campo implícito + succión física con exclusión estructural), fusión pegajosa, tempo cinematográfico ×0.3.
+- API: `SONA.leer(dim, nivel)` / `SONA.lecturas()` / `SONA.reposo()` — la puerta para sensores reales.
+- Exports: SVG · PNG 1900/3800/7600 · MP4 12 s (H.264, WebM de respaldo) · Copiar SVG.
+- Paleta calma vigente: papel `#f1f0ea`, tinta `#1e2126`, **bruma `#7d93ab` único acento**, cielo con grano; una sola rampa para las 7 dimensiones.
 
 ## Origen
-- `sona.eps` — vector original (Adobe Illustrator 30.6, Juan Carrillo, 950×200 pt).
-- `sona-master.svg` — geometría exacta extraída del EPS (un path compuesto, 3 subtrazados).
-
-## Constantes de identidad (protegidas)
-- **Radio de redondez: 25 u** · **módulo: 50 u** · **lienzo: 950×200 u**.
-- El reposo del sistema ES el vector maestro (residual < 0.1 u, verificado).
-
-## Motor (dos capas)
-1. **Esqueleto blando** — ~608 nodos internos en el logo (retícula de siembra 11.2 u; las demás piezas escalan por su área de tinta), unidos por ~1900 muelles de cohesión (las aristas corren por dentro de la tinta, sin atajos por contadores; alcance 21 u, kInt 42, amortiguamiento relativo 0.11c). Cada nodo: masa, muelle de retorno al reposo, amortiguamiento. Solo los nodos reciben fuerzas (dimensiones, API).
-2. **Contorno** — ~485 puntos remuestreados uniformemente (9 u) del maestro. Cada punto sigue un objetivo *skinned* por influencia gaussiana `exp(−d²/(2σ²))` normalizada (σ fija ≈ 46 u), con retardo viscoso. Después, 3 iteraciones de restricciones:
-   - distancia entre vecinos (reparte tensión, evita cortes),
-   - suavizado laplaciano **de la desviación** (mata picos sin limar las R25),
-   - anti-deriva de centroide (el lazo no "camina"),
-   - conservación de área por subtrazado (presión por la normal, contadores incluidos).
-   Reconstrucción Catmull-Rom → Bézier cúbicas: salida siempre vectorial.
-
-## Conducción (sin cursor)
-La manipulación directa con cursor (arrastrar/empujar) fue retirada — la masa se conduce solo por:
-- **Deriva autónoma**: ruido lento sobre los objetivos de los nodos (estructurado por la física; nunca por punto). SOLO horizontal: el campo viaja en x como una corriente que atraviesa la palabra — compresión y deslizamiento lateral, sin ondulación vertical (verificado: contorno 38 u en x vs 4.9 u en y).
-- **API externa**: `SONA.nodos() / conducir(k,dx,dy) / liberar(k) / impulso(k,vx,vy) / reposo() / params` — la puerta para datos externos (audio, scroll, sensores).
-
-## Parámetros (panel Física)
-elasticidad · viscosidad · amortiguamiento · masa · radio de influencia · resistencia al estiramiento · conservación de área · velocidad de retorno · suavizado de curvatura · elongación máx · **tensión de fusión**.
-
-## Niveles 1–5 y loop de 5 s (2026-07-18 — estado actual)
-Pieza única: el logotipo (abecedario y formas retirados para máximo control). Cada dimensión se fija en un **nivel 1–5** (celdas-medidor; mapeo interno 0.1/0.3/0.5/0.75/1). Todo movimiento es **periódico con ciclo exacto de 5 s reales**: las fases usan armónicos enteros (pulso de sonido = 2 latidos/ciclo, onda de flujo = 1 λ/ciclo, grano de materia = 1/ciclo) sobre un reloj real independiente del tempo — verificado: diferencia 0.17 u tras un ciclo (costura invisible). "Volver al reposo" resetea la fase → tomas reproducibles. El nombre de export codifica la lectura: `sona-n3422532`. API: `SONA.leer("sonido", 4)`.
-
-## Histórico — Abecedario y escritura libre (retirado)
-Campo de texto en la sección Pieza: escribe cualquier palabra (a–z + espacio, máx 14) y se construye como pieza viva con la misma física. Los 26 glifos están definidos como **esqueletos de trazos de 50 u sobre la retícula de 25** (la lógica original del wordmark); el contorno se genera con un campo de distancia suave —las uniones entre trazos quedan redondeadas ≈R25— y marching squares (res 2.5 u, RDP 0.45, orientación exterior/contador normalizada). El punto de la i/j es una gota independiente. Glifos cacheados; piezas de texto cacheadas (14). Exporta como `sona-txt-<palabra>`.
-
-Nota de calibración (mismo día): al simplificar se había perdido la presencia del movimiento — ganancia horneada subió a 0.5 y amplitudes de canal recalibradas (cizalla 0.45, pulso 0.11@0.5 Hz, onda 60 u @1.3 rad/s, materia 9): amplitud visible ~28 u con lecturas por defecto.
-
-## Paleta calma (2026-07-20 — vigente)
-Rediseño cromático a petición: pocos colores, calma. Hora azul/niebla: papel `#f1f0ea`, tinta `#1e2126`, **bruma `#7d93ab` como único acento**, niebla `#ccd4da`; cielo `#8fa0b4→#e3e0d8` con grano. Las 7 dimensiones comparten una sola rampa (niebla→bruma) — instrumento de una escala. Puntos decorativos eliminados. `prefers-reduced-motion` implementado (identidad congelada; la grabación reactiva). Contexto estratégico en `PRODUCT.md` y sistema visual en `DESIGN.md`.
-
-## Look atardecer (2026-07-20 — histórico, reemplazado por Paleta calma)
-Lenguaje visual tomado de una referencia de app de atardeceres: cielo degradado (#8398c2→#e2764a) con grano (feTurbulence overlay) como atmósfera del escenario y de la ficha; acentos escarlata/naranja/lavanda (los 3 puntos); Hanken Grotesk 200–300 para numerales grandes; UI redondeada y suave. Cada dimensión tiene su gradiente propio (DIM_COL) — las celdas del panel y los metros verticales de la etiqueta lo usan. La etiqueta ganó: índice del lugar (promedio de niveles, %), palabras de nivel (mínima→plena), sol de líneas, barra inferior de gradiente y fecha. Exports en paridad total.
-
-## Etiqueta del espacio (2026-07-19, del sketch del usuario)
-Segunda vista de la plataforma (toggle **Vista: Logotipo | Etiqueta**): una ficha de análisis tipo etiqueta — marco, el logo VIVO arriba (el mismo SVG animado se muda dentro de la tarjeta), los 7 medidores de nivel al centro, "Descripción del espacio" (textarea en el panel, sección 02) y pie con firma de lecturas en notación de niveles (`luz·3 pau·4 …`). Exports propios: **PNG** (tarjeta 700×1000 escalada, tope 3800 px), **SVG** completo (textos + logo con filtro nítido anidado) y **MP4 vertical 1080×1543** con el arco de 12 s. Los niveles también se pueden fijar clicando las celdas de la propia etiqueta.
-
-## Plataforma simplificada (2026-07-18)
-El panel quedó en 4 secciones: **Pieza · Dimensiones · Color · Exportar** (+ botón "Volver al reposo"). La física está horneada: ganancia fija 32% (`SONA.ganancia(v)` la ajusta por código), fusión pegajosa siempre activa, sin sliders de ajuste fino ni toggles de depuración en la UI (esqueleto/retícula/fantasma siguen en el DOM, accesibles por consola). El movimiento viscoso ES la base del proyecto.
-
-## Mezcla — ahora interna (histórico)
-Un solo macro **MEZCLA 0–100%** gobierna el temperamento completo: a 0 la identidad respira contenida; a 100 no hay fuerza de retorno, los nodos vagan ±160 u, los contadores colapsan y la palabra se amasa hasta charco irreconocible. Los 11 parámetros finos siguen bajo "Ajuste fino" (colapsable) y son editables encima del macro.
-
-**Fusión pegajosa** (toggle, ON): cada contacto entre gotas crea una soldadura persistente entre nodos del esqueleto (muelle kBond=120, máx 90 soldaduras). Solo "Volver al reposo" (o apagar el toggle) las deshace — verificado: reposo restaura la identidad con residual 0.
-
-**Tempo cinematográfico**: el reloj completo de la simulación corre a ×0.3 (ajustable en "Ajuste fino" → Tempo, 0.1–1). Toda la física —deriva, arrastre, succión, retorno— ocurre en cámara lenta coherente: ~1.4 u/s de movimiento medio (11× más lento que tiempo real, verificado). El video de 8 s captura ese metraje lento tal cual.
-
-## Coalescencia (gotas que se funden)
-Dos capas complementarias controladas por "tensión de fusión" (σ en u, 0 = off):
-1. **Menisco visual**: filtro campo-implícito (feGaussianBlur σ + umbral de alfa 24/−12). Matemática clave: blur+iso-0.5 deja bordes rectos y radios R25 idénticos en reposo; superficies a <~1.2σ forman puente líquido. Replicado en PNG/WebM vía canvas (blur + umbral de píxeles) y horneado en el SVG exportado.
-2. **Succión física**: hash espacial del contorno detecta pares de superficie a <2.2σ; la fuerza se enruta al esqueleto vía los pesos de skinning. Exclusión estructural: pares ya cercanos en el máster (contadores, puentes, letras adyacentes) no se atraen — SALVO que ambos puntos estén en excursión >35 u de su reposo (dos gotas desplazadas que se tocan sí se funden). En reposo la fuerza es exactamente cero.
-Al soltar, la elasticidad separa el puente y la identidad se recupera.
-
-## Materiales
-5 presets del mismo sistema: **V1 Denso · V2 Melaza · V3 Slime (default) · V4 Magma · V5 Goma**.
-
-## Exportar
-SVG (frame vectorial con metadatos) · PNG 1900/3800/7600 px (fondo opcional/transparente) · **Video MP4 12 s** (H.264 vía MediaRecorder; WebM como respaldo si el navegador no muxea mp4) · Copiar SVG.
-
-## Arco narrativo (rampa)
-Toda animación nace del logotipo/forma base: al cargar, al cambiar de pieza, al volver al reposo y SIEMPRE al grabar, una rampa smoothstep de 6 s funde de la identidad intacta hacia la distorsión elegida (multiplica la amplitud de conducción, no los parámetros), y ahí se queda fluctuando. El video de 12 s captura el arco completo: 6 s identidad→distorsión + 6 s de fluctuación. Verificado: fRampa 0→1 en 6 s, MP4 H.264 de 12.5 s @1400px descargado.
+- `sona.eps` — vector original (Juan Carrillo, AI 30.6, 950×200 pt) · `sona-master.svg` — geometría exacta extraída.
 
 ## Límites conocidos
-- Sin auto-colisión: con elongación máxima alta y arrastres cruzados extremos, un lazo puede auto-intersecarse (la conservación de área usa área firmada neta). El límite de elongación lo hace raro en uso normal.
-- El video WebM no admite canal alfa: al grabar con fondo transparente se aplica el color de fondo.
-- La API `SONA.conducir` usa un muelle moderado: para gestos más violentos usar `SONA.impulso`.
+Sin auto-colisión del lazo en extremos; WebM sin canal alfa; `SONA.conducir` usa muelle moderado (usar `impulso` para gestos violentos).
 
-## Servir
+---
+
+# Documentos y prototipos del proceso
+
+| Archivo | Qué es |
+|---|---|
+| `PRD-app.md` | PRD de la app: objetivo, usuarios, flujos, criterios de aceptación, anti-patrones |
+| `DESIGN.md` | Sistema visual del instrumento (tokens, componentes, motion, exports) |
+| `PRODUCT.md` | Registro estratégico (brand híbrido, usuarios, principios) |
+| `zona-llenado.html` | El llenado del lugar en 5 capas (modelo de datos/servicio) |
+| `zona-sona-posicionamiento.html` | Posicionamiento: ZONA diagnostica · SONA trata |
+| `zona-flujo.html` | Flujo de sesión original (Sensory Navigation System) |
+| `proto-publica.html` | Vista pública / instalación (lámina viva del lugar) |
+| `proto-zona-experiencia.html` · `proto-zona-app.html` · `proto-panel.html` · `proto-cartel.html` | Iteraciones del proceso |
+| `sona-app-v1-respaldo.html` | Primera versión de la app (pre-rediseño por test de usuario) |
+
+## Servir en local
 ```
-npx http-server /Volumes/Lexar/sona -p 8029
+python3 -m http.server 8031 -d /Volumes/Lexar/sona
 ```
-(config `sona` registrada en el launch.json de UMBRAL/WEB).
+(o `npx http-server -p 8029`; config `sona` registrada en el launch.json de UMBRAL/WEB). **Ojo**: la app y el panel necesitan servirse por http — abiertos como `file://` las variantes del logotipo no cargan (la versión `sona-app-share.html` sí funciona con doble clic: todo va incrustado).

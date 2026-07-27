@@ -104,3 +104,34 @@ Texto sobre papel: tinta plena o tinta ≥.72 alfa (AA). Los metros nunca llevan
 ## Exports (paridad obligatoria)
 
 Todo cambio visual debe replicarse en: filtro SVG vivo, `svgActual()`, `svgEtiqueta()`, `pintarCanvas()`, `pintarEtiqueta()` (PNG/MP4). La nitidez del contorno: umbral adaptativo `pendienteGoo` (transición ≈1px del raster final) + supermuestreo 3× en vivo.
+
+
+## La app del visitante + panel de consultoría (2026-07-23→26)
+
+Derivada OSCURA del sistema para las superficies de bolsillo (`sona-app.html`, `sona-panel.html`); el instrumento (`index.html`) conserva la paleta calma clara. Documentación de producto en `PRD-app.md`.
+
+### Tokens (modo oscuro)
+| Token | Valor | Uso |
+|---|---|---|
+| `--fondo` | `#0e1013` | Fondo de app |
+| `--texto` | `#eceee9` | Texto pleno |
+| `--textoSuave` | texto @.6 | Etiquetas, secundario |
+| `--a1/--a2` | por mood | La aurora (par profundo/claro) |
+
+Moods → auroras: Calmado `#4a6b96/#8fb2d9` · Equilibrado `#4d7a5d/#9fc4a5` · Activo `#b07a2e/#e8b56b` · Concurrido `#b25330/#e8895a`. `teñir(mood)` cambia las variables globales: aurora, botones primarios, alertas y campo de flujo heredan solos.
+
+### Palabras de visitante (regla dura: cero jerga interna en pantalla)
+Climas: Tranquilo/a · Normal · Con movimiento · Lleno/Llena ahora. Niveles 1–3 en palabras: sonido `bajo/medio/alto`, luz `suave/natural/brillante`, gente `poca/algo/mucha`.
+
+### Componentes
+- **Aurora**: 2–3 blobs radiales blur 70, loops 18/12 s; velo inferior a `--fondo`.
+- **Onda de lectura** (shader WebGL, alpha premultiplicado): canales uSon (amplitud+frecuencia), uLuz (brillo/grosor/halo), uGen (aberración+deriva); uTinte/uMezcla la visten del mood en fichas. Dibuja solo con su pantalla activa; `renderScale = min(1.4, dpr·0.7)`.
+- **Logotipo estampado**: filtro de relieve invertido (sombra arriba .21, luz abajo .10, cuerpo −4%) + **morph granulado** letra-a-letra: crossfade 3 s con salida retrasada 1.2 s (nunca huecos) y pulso de turbulencia (feDisplacementMap montado SOLO durante el pulso).
+- **Liquid glass**: gradiente blanco .05→.015, blur 14–24, filo especular inset, destello radial; el primario se enciende con `color-mix` del mood. Sin `saturate` en chips (azulea) ni rectángulos de header (el chrome es texto fijo sin tratamiento).
+- **Filtros de necesidades**: iconos tachables (slash) con interpretación escrita; sin preguntas.
+- **Campo de flujo** (ficha abierta): partículas canvas 2D media resolución, campo de ruido determinista con periodo 12 s; gente=cantidad/velocidad, sonido=turbulencia, luz=brillo, color=aurora del mood.
+- **Sonido del clima** (opt-in): dron seno+triángulo (raíz por mood: G2/A2/C3/D3), ruido LCG por pasabanda, LFO al tempo del mood; morfeo `setTargetAtTime`.
+- **Desbloqueo**: capa opaca con aurora propia, 1:1 con el dedo, umbral 22%/velocidad, slide sin fade (860 ms, curva iOS), blindaje de toques durante la transición.
+
+### Motion y accesibilidad
+Todos los ritmos son nombrables y periódicos; `prefers-reduced-motion` congela banda, aurora, onda (1 frame), campo y transiciones. Targets táctiles 40–48 px (pendientes menores en CA-3.5 del PRD). Scroll de página completa (sin cajas anidadas); header sticky de solo texto.
