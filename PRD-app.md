@@ -1,8 +1,22 @@
 # PRD — SONA · La app del visitante
 
-**Versión:** 1.0 · 23 jul 2026
-**Prototipo de referencia:** `sona-app.html` (v2 "tres toques"; v1 descartada respaldada en `sona-app-v1-respaldo.html`)
+**Versión:** 1.1 · 7 ago 2026
+**Prototipo de referencia:** `sona-app.html` (v4 bajo manual de identidad; v2 "tres toques" conserva flujo y textos; v1 descartada respaldada en `sona-app-v1-respaldo.html`)
 **Documentos hermanos:** `PRODUCT.md` (plataforma/identidad), `DESIGN.md` (sistema visual), `zona-llenado.html` (llenado del lugar), `zona-sona-posicionamiento.html` (posicionamiento)
+
+> **NORMATIVO — Manual de Identidad SONA 2026** (`manual-identidad-2026.pdf`):
+> la app lo sigue de manera obligatoria. En pantalla eso significa:
+> **siete factores sensoriales** (sonido, luz, flujo, espera, orientación,
+> saturación visual, pausa) como organización de la lectura; **una familia
+> de color por factor** (azul, amarillo, verde, naranja tierra, morado,
+> azul verdoso, marrón — muestreadas del manual); las palabras de factor
+> en **SONA Serif** (vectores exactos del manual); el texto en **CY Text**
+> (subset extraído del manual, con la fuente local completa si se instala);
+> el **logotipo serif** como marca del header (mínimo digital 76 px) y el
+> **dinámico** (variantes) estampado en la puerta. Los niveles se siguen
+> diciendo en palabras de visitante (§4, §8): el manual pone la identidad,
+> no jerga. Solo se muestran factores con dato real del acta; el que no
+> tiene lectura lo dice ("sin lectura").
 
 ---
 

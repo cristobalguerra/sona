@@ -1,3 +1,6 @@
 .DS_Store
 ._*
 .impeccable/live/
+# el manual de Juan no se publica; la app lleva lo que necesita incrustado
+manual-identidad-2026.pdf
+img/manual/*.png

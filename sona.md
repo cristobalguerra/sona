@@ -24,7 +24,17 @@ El principio rector en todo el sistema: **medición, no decoración** — cada c
 - Panel: https://cristobalguerra.github.io/sona/sona-panel.html
 - Instrumento: https://cristobalguerra.github.io/sona/
 
-Todo es HTML autocontenido, sin build ni dependencias. `sona-app-share.html` es el build de distribución de la app (variantes del logotipo, foto y fuentes incrustadas, ~345 KB).
+Todo es HTML autocontenido, sin build ni dependencias. `sona-app-share.html` es el build de distribución de la app (variantes del logotipo, foto, fuentes y vectores del manual incrustados, ~440 KB, cero `fetch`).
+
+## El manual de identidad (NORMATIVO)
+
+**`manual-identidad-2026.pdf`** — el Manual de Identidad SONA 2026 de Juan rige la app de manera obligatoria. Qué toma la app de él:
+
+- **Siete factores sensoriales** — sonido, luz, flujo, espera, orientación, saturación visual y pausa — como organización de toda lectura. Lo medido como "gente" se comunica como **flujo**.
+- **Una familia de color por factor** (§Colores Corporativos), muestreada del PDF a tokens (`--son-* --luz-* --flu-* --esp-* --sat-* --ori-* --pau-*`, escala 1 claro → 5 profundo). Los climas toman su familia: Calmado→sonido (azul) · Equilibrado→orientación (azul verdoso, "equilibrio") · Activo→flujo (verde, movimiento) · Concurrido→espera (naranja tierra, permanencia). Regla nombrable: aurora `a1` = paso 3 · `a2` = paso 1.
+- **Tipografías**: CY Text como texto (subset Regular/SemiBold extraído del propio PDF e incrustado como OTF con `unicode-range`; si se instala la fuente completa, `local()` la toma sola). Las **palabras de factor en SONA Serif** son vectores exactos extraídos de la pág. 14 del manual (sprite `#w-sonido … #w-visual`).
+- **Logotipos**: el **serif** (vector de la portada) es la marca del header — 76 px, la medida mínima digital del manual — y el fallback sin red de la puerta; el **dinámico** (variantes 4 estados/letra) sigue estampado en el cielo, que es justo el "diseño dinámico" del manual.
+- **Honestidad de dato**: solo se pintan factores con dato real del acta (espera=señal *llena*, pausa=señal *bancas*, orientación=*cómo llegar*); saturación visual dice "sin lectura" hasta que el panel la capture.
 
 ---
 
@@ -33,13 +43,13 @@ Todo es HTML autocontenido, sin build ni dependencias. `sona-app-share.html` es 
 Diseñada tras un rediseño radical guiado por prueba con visitante primerizo — el flujo, los textos y los anti-patrones están documentados en **[`PRD-app.md`](PRD-app.md)** (objetivo, usuarios, flujos, criterios de aceptación y la lista de lo que no debe repetirse).
 
 ## El flujo — "tres toques"
-1. **La puerta** — el lugar se presenta: logotipo estampado en el cielo (morph granulado perpetuo), la onda de lectura, la palabra del clima (*Tranquilo*), y el desbloqueo tipo iPhone (la capa sigue al dedo y sube sin fade).
-2. **La lectura + Para ti** — la onda del lugar, los 3 estímulos en palabras (chips de vidrio), y la lista de espacios **rankeada según lo que prefieres evitar**. Personalización sin preguntas: tres iconos tachables (oído = ruido, sol = luz, siluetas = gente) con interpretación escrita ("Evitar ruido · mucha gente").
-3. **La ficha del espacio** — su onda teñida de su clima, sus estímulos en palabras, foto en mirilla, cómo llegar caminando, y el **campo de flujo**: partículas-viento sobre el fondo desenfocado (gente = cantidad/prisa, sonido = turbulencia, luz = brillo, color = mood).
+1. **La puerta** — el lugar se presenta: logotipo estampado en el cielo (morph granulado perpetuo), la **representación viva** (el arte del factor de la familia del clima, con su turbulencia), la palabra del clima (*Tranquilo*), y el desbloqueo tipo iPhone (la capa sigue al dedo y sube sin fade).
+2. **La lectura + Para ti** — la onda del lugar, los factores en palabras (chips de vidrio con la palabra del factor en SONA Serif, teñida de su familia), y la lista de espacios **rankeada según lo que prefieres evitar**. Personalización sin preguntas: tres iconos tachables (oído = ruido, sol = luz, siluetas = gente) con interpretación escrita ("Evitar ruido · mucha gente").
+3. **La ficha del espacio** — **los siete factores** (sonido/luz/flujo medidos por nivel · espera y pausa desde las señales del acta · saturación visual honesta "sin lectura" · orientación en "cómo llegar"), foto en mirilla, y **el fondo es la representación animada de su familia** (banda ancha sobre el fondo desenfocado, la misma animación de la puerta; el cielo de la tarjeta la lleva también). El campo de partículas se retiró junto con la onda-luz.
 
 ## El sistema sensorial (todo conectado al clima)
 - **Aurora**: el mood como luz de fondo (loops exactos 18/12 s) — tiñe toda la app.
-- **Onda** (shader WebGL): tres canales ortogonales — sonido → vibración, luz → luminosidad, gente → hebras y deriva.
+- **Representación viva** (sustituyó a la onda-luz WebGL, retirada a petición): el arte del manual de la familia del clima, con la turbulencia SVG de su factor y **alfa por luminancia dentro del filtro** (el negro del arte se vuelve transparencia — sin `mix-blend-mode`, que Safari no compone sobre filtros `url()`).
 - **Sonido** (Web Audio sintetizado, opt-in en "Escuchar lectura"): dron raíz+quinta afinado por clima, murmullo de ruido determinista (LCG), pulso del filtro al tempo del mood.
 - **Logotipo estampado**: hundido en el fondo (filtro de relieve invertido), con morph granulado letra-a-letra (3 s, salida retrasada — nunca huecos; turbulencia solo durante el pulso).
 - **Liquid glass**: chips, tarjetas y botones son vidrio real — blur del mundo detrás, filo especular, destello; sin rellenos de color.
@@ -105,6 +115,9 @@ Sin auto-colisión del lazo en extremos; WebM sin canal alfa; `SONA.conducir` us
 
 | Archivo | Qué es |
 |---|---|
+| `manual-identidad-2026.pdf` | **Manual de Identidad SONA 2026 (NORMATIVO)** — logotipos, 7 factores, colores por factor, SONA Serif + CY Text |
+| `img/manual/` | Las representaciones sensoriales del manual extraídas en alta (7 factores + 4 atributos + concepto + referencia) |
+| `factores-vivos.html` | Lámina **autocontenida** (~1.4 MB, abre con doble clic) de las representaciones **con movimiento simulado por factor** (vibración, pulso, deriva, respiración, corriente, turbulencia, silencio) + los atributos — loops exactos, `prefers-reduced-motion` las congela. En la app, la ficha lleva la representación de la familia de su clima en el cielo (deriva de 24 s tras la onda) |
 | `PRD-app.md` | PRD de la app: objetivo, usuarios, flujos, criterios de aceptación, anti-patrones |
 | `DESIGN.md` | Sistema visual del instrumento (tokens, componentes, motion, exports) |
 | `PRODUCT.md` | Registro estratégico (brand híbrido, usuarios, principios) |
