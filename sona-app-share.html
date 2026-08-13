@@ -81,8 +81,12 @@ body{
   touch-action:pan-y;
   background:var(--fondo);
 }
-@media (min-width:520px){
-  #app{width:410px;height:min(860px,94vh);border-radius:38px;box-shadow:0 30px 90px rgba(0,0,0,.6)}
+/* Medida iPad mini (744×1133 pt): en el propio iPad la app llena la pantalla.
+   En escritorio el lienzo es EXACTO 744×1133 a tamaño real — si la ventana no
+   lo alcanza se escala completo (transform), sin reacomodar el interior. */
+@media (min-width:900px){
+  body{overflow:hidden}
+  #app{width:744px;height:1133px;flex:none;transform:scale(var(--escala,1));transform-origin:center;border-radius:38px;box-shadow:0 30px 90px rgba(0,0,0,.6)}
 }
 #app::after{
   content:"";position:absolute;inset:0;pointer-events:none;z-index:40;
@@ -232,7 +236,7 @@ body{
 #p0.fuera{transform:translateY(-104%)}
 
 #bandaCaja{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:0;gap:24px}
-#banda{width:86%;max-width:330px;color:var(--texto)}
+#banda{width:86%;max-width:560px;color:var(--texto)}
 #banda svg{display:block;width:100%;height:auto}
 #bandaNota{text-align:center;max-width:34ch}
 
@@ -1352,6 +1356,10 @@ pintarFiltros(); /* los iconos de necesidades, en ambas pantallas */
 $("fkOrientacion").setAttribute("viewBox",W_VB.orientacion); /* la palabra del factor, a su caja */
 if(rm)document.querySelectorAll("animate").forEach(a=>a.remove()); /* quietud total */
 
+</script>
+<script>
+/* La escala del marco de escritorio: tamaño real 744×1133 cuando cabe */
+(function(){var f=function(){document.documentElement.style.setProperty("--escala",Math.min(1,innerWidth*.96/744,innerHeight*.94/1133))};addEventListener("resize",f);f()})();
 </script>
 </body>
 </html>
