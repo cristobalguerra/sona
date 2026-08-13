@@ -245,7 +245,9 @@ body{
 /* LA REPRESENTACIÓN VIVA: el arte del manual como lectura del ambiente
    (sustituye a la onda-luz). Imagen de la familia del clima, con la
    turbulencia de su factor; el negro del arte desaparece por blend. */
-.arteOnda{display:block;width:100%;height:96px;border-radius:18px;overflow:hidden;position:relative}
+/* la franja guarda el ENCUADRE del teléfono (≈18:5): con altura fija,
+   a lo ancho del iPad el cover ampliaba el arte y cortaba las crestas */
+.arteOnda{display:block;width:100%;aspect-ratio:18/5;height:auto;max-height:194px;border-radius:18px;overflow:hidden;position:relative}
 .arteOnda img{
   width:100%;height:100%;object-fit:cover;display:block;
   /* el filtro fA-* convierte el negro en transparencia (alfa por
@@ -280,7 +282,7 @@ img.arte-Concurrido{filter:url(#fA-esp);animation:respiraEspera 12s ease-in-out 
 /* ============ PANTALLA 2 · LECTURA + VENTANA ============ */
 /* arriba: la lectura del espacio */
 #lectura{display:flex;flex-direction:column;gap:18px;flex:none}
-#lectura .arteOnda{height:110px}
+#lectura .arteOnda{aspect-ratio:16/5;max-height:220px}
 #lectura .l{font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--textoSuave)}
 #estadoPal2{font-family:var(--grot);font-weight:200;font-size:34px;line-height:1.05;letter-spacing:-.02em;margin-top:8px}
 
